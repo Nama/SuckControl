@@ -7,6 +7,8 @@ from os import path, getcwd
 from threading import Thread
 from signal import signal, SIGINT
 
+ui.CONFIG["verbose"] = True
+ui.CONFIG['color'] = 'never'
 terminate = False
 
 
@@ -100,7 +102,7 @@ def _control_speed(sensors_all, temp, control, points):
             try:
                 sensor_control.Control.SetSoftware(to_set)
             except AttributeError:
-                ui.info('Can\'t control this sensor: {}'.format(sensor_control.Name))
+                ui.error('Can\'t control this sensor: {}'.format(sensor_control.Name))
 
 
 def handler(signal_received, frame):
@@ -112,7 +114,7 @@ def handler(signal_received, frame):
 
 def start(handle, config, sensors_all):
     if len(config['user']) == 0:
-        ui.info_1('No rules for fan speeds found. Add new rules.')
+        ui.error('No rules for fan speeds found. Add new rules.')
         return
     ui.debug('Config OK, I guess')
     signal(SIGINT, handler)

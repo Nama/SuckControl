@@ -1,9 +1,6 @@
 import cli_ui as ui
 from time import sleep
 
-#ui.CONFIG["verbose"] = True
-ui.CONFIG['color'] = 'never'
-
 
 def set_sensor_names(config, sensors_all):
     ui.info_2('We need to give all sensors a name, so you can recognize them.')
@@ -22,7 +19,7 @@ def set_sensor_names(config, sensors_all):
                 sleep(5)
                 sensor.Control.SetDefault()
             except AttributeError:
-                ui.info_3('Can\'t control {}'.format(sensor.Name))
+                ui.warning('Can\'t control {}'.format(sensor.Name))
         ui.info_2('Hardware string: {}'.format(lib_hwpath))
         user_name = ui.ask_string('Name this sensor: {}'.format(lib_name), default=lib_name)
         sensor.set_Name(user_name)
@@ -43,13 +40,13 @@ def add(config, sensors_all):
 
     temp = ui.ask_choice('Choose the temperature sensor you want your fan depending on:', choices=list(choices_temps.keys()), sort=False)
     if not temp:
-        ui.info_2('Aborting. Nothing picked.')
+        ui.warning('Aborting. Nothing picked.')
         return None
     pick.append(choices_temps[temp])
     config['user'].append({'sensor_temp': pick[0]})
     control = ui.ask_choice('Choose the control sensor you want to control:', choices=list(choices_controls.keys()), sort=False)
     if not control:
-        ui.info_2('Aborting. Nothing picked.')
+        ui.warning('Aborting. Nothing picked.')
         return None
     pick.append(choices_controls[control])
     config['user'][-1]['sensor_control'] = pick[1]
@@ -71,6 +68,6 @@ def add(config, sensors_all):
                     continue
             config['user'][-1]['points'].append(vall)
     if not config['user'][-1]['points']:
-        ui.info_2('Didn\'t enter any values, not saving.')
+        ui.warning('Didn\'t enter any values, not saving.')
         config['user'].pop()
     return config
