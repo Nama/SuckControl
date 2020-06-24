@@ -1,0 +1,3 @@
+cli-ui
+numpy
+pythonnet
