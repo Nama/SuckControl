@@ -29,6 +29,6 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 ## Building
 * After cloning, `pip -r requirements.txt`
 * Get `LibreHardwareMonitorLib.dll` and `HidSharp.dll` from LibreHardwareMonitor
-  * You can run `suckcontrol.py` in this state
+  * You can run `ui.py` in this state
 * Install PyInstaller `pip install PyInstaller`
 * Run PyInstaller with: `-F --uac-admin --noupx --add-data LibreHardwareMonitorLib.dll;. --add-data HidSharp.dll;. --hidden-import pkg_resources.py2_warn suckcontrol.py`

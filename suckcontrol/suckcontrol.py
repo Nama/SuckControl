@@ -7,7 +7,7 @@ from os import path, getcwd
 from threading import Thread
 from signal import signal, SIGINT
 
-ui.CONFIG["verbose"] = True
+ui.CONFIG["verbose"] = False
 ui.CONFIG['color'] = 'never'
 terminate = False
 
