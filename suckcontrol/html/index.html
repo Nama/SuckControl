@@ -1,0 +1,60 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="mdl-grid">
+    {% for rule in rules %}
+    <div class="mdl-cell mdl-cell--2-col">
+        <div class="index-card mdl-card mdl-shadow--2dp">
+            <div class="mdl-card__title mdl-card--expand">
+                <table>
+                    <thead>
+                        <tr><th class="mdl-data-table__cell--non-numeric">{{rule[1]}}</th><th class="mdl-data-table__cell--non-numeric">{{rule[2]}}</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for point in rule[0] %}
+                    <tr>
+                        <td>{{ point[0][1]}}</td><td>{{ point[1][1]}}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mdl-card__actions mdl-card--border">
+                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    <i class="material-icons">delete</i>
+                </a>
+                <div class="mdl-layout-spacer"></div>
+                <label for="{{rule[2]}}" class="mdl-switch mdl-js-switch">
+                    <input type="checkbox" id="{{rule[2]}}" class="mdl-switch__input">
+                </label>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" href="/test_controls">
+        Button
+    </a>
+</div>
+<div class="mdl-grid" id="sensors">
+    <script>
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        async function run_loop() {
+            while (true) {
+                await show_sensors('template_sensors', 'sensors')
+                return
+                await sleep(1000)
+            }
+        }
+        async function show_sensors(link, id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', link, true);
+            xhr.onreadystatechange = function () {
+                document.getElementById(id).innerHTML = this.responseText;
+            };
+            xhr.send();
+        }
+        run_loop()
+    </script>
+</div>
+{% endblock %}

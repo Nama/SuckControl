@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% block content %}
+<script>
+    function setSlider(id, value) {
+        var data = new FormData();
+        data.append('sensorname', id);
+        data.append('speed', value);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/set_controls', true);
+        xhr.send(data);
+    }
+    function stop_controls() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/stop_controls', true);
+        xhr.send();
+    }
+</script>
+{% for sensor in html %}
+{{sensor.Name}}
+<p style="width:300px">
+    <input id="{{sensor.Name}}" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="{{sensor.Value}}" step="1" onchange="setSlider(this.id, this.value)">
+</p>
+{% endfor %}
+<a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="stop_controls()" href="/">
+    Stop and Return
+</a>
+{% endblock %}

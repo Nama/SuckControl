@@ -1,0 +1,16 @@
+{% for sensor in sensors_all.values() %}
+<div class="mdl-cell mdl-cell--2-col">
+    <div class="sensor-card index-card mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title mdl-card--expand">
+            {{sensor.Name}}
+            <div class="mdl-layout-spacer"></div>
+            {{sensor.Value}}
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+            <i class="material-icons">toys</i>
+            <div class="mdl-layout-spacer"></div>
+            <i class="material-icons">speed</i>
+        </div>
+    </div>
+</div>
+{% endfor %}

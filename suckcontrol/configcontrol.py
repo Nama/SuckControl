@@ -37,11 +37,14 @@ def config_init(sensors_all):
 
 
 def config_show(config):
+    rules = []
     for i, rule in enumerate(config['user']):
         ui.debug(rule)
         data = []
         for temp, control in rule['points']:
             ui.debug(temp, control)
             data.append([(ui.bold, temp), (ui.bold, control)])
-        ui.info_1('Rule #{}'.format(i))
-        ui.info_table(data, headers=(config['main'][rule['sensor_temp']], config['main'][rule['sensor_control']]))
+        #ui.info_1('Rule #{}'.format(i))
+        #ui.info_table(data, headers=(config['main'][rule['sensor_temp']], config['main'][rule['sensor_control']]))
+        rules.append((data, config['main'][rule['sensor_temp']], config['main'][rule['sensor_control']]))
+    return rules
