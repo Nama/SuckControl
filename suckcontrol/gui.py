@@ -1,143 +1,130 @@
-import webview
-import sys
-from time import sleep
-from suckcontrol import *
-from usersetup import *
-from configcontrol import *
-import cli_ui as ui
-from os import path, getcwd
-
-from flask import Flask, render_template, request
+from sys import exit
 import webview
 import threading
+import cli_ui as ui
+from time import sleep
+from os import path, getcwd
+from usersetup import *
+from configcontrol import Config
+from flask import Flask, render_template, request, session
 
 folder = path.join(getcwd(), 'html')
 app = Flask(__name__, static_folder=folder, template_folder=folder)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
 
 
-def show_menu(handle, config, sensors_all):
-    config_show(config)
+@app.route('/')
+def index():
+    return gui.cindex()
 
-    choices = {'Add new rule': 'add', 'List Hardware Sensors': 'list_sensors', 'List Config Rules': 'list_config', 'Remove one rule': 'remove', 'Stop controlling the fans': 'stop', 'Reset your config': 'reset', 'Exit': 'exit'}
-    pick = ui.ask_choice('Interactive Mode. Use --daemon after setting up.', choices=list(choices.keys()), sort=False)
-    ui.debug(pick)
-    if choices[pick] == 'add':
-        config = usersetup.add(config, sensors_all)
-        if config:
-            config_save(config)
-    elif choices[pick] == 'list_sensors':
-        # List all temperature and control sensores
-        data = []
-        for ident, sensor in sensors_all.items():
-            data.append(((ui.bold, config['main'][ident]), (ui.bold, sensor.Value)))
-        ui.info_table(data, headers=['Name', 'Value'])
-    elif choices[pick] == 'list_config':
-        # Show the config
-        config_show(config)
-    elif choices[pick] == 'remove':
-        config_show(config)
-        remove = ui.ask_string('Enter the number of the rule you want to remove:')
-        try:
-            config['user'].pop(int(remove))
-        except IndexError:
-            ui.info('Wrong number. Nothing deleted.')
-        config_save(config)
-    elif choices[pick] == 'stop':
-        # Stop controlling the fans
-        stopped = ui.ask_yes_no('Answer \'y\' after you stopped all instances!', default=False)
-        if stopped:
-            stop(handle)
-    elif choices[pick] == 'reset':
-        # Generate new empty config
-        sure = ui.ask_yes_no('This will erase your config! Are you sure?', default=False)
-        if sure:
-            config_init(sensors_all)
-    elif choices[pick] == 'exit':
-        sys.exit(0)
-    config = config_load()
-    show_menu(handle, config, sensors_all)
+
+@app.route('/close')
+def close():
+    return gui.cclose()
+
+
+@app.route('/minimize')
+def minimize():
+    return gui.cminimize()
+
+
+@app.route('/template_sensors')
+def template_sensors():
+    return gui.ctemplate_sensors()
+
+
+@app.route('/test_controls')
+def test_controls():
+    return gui.ctest_controls()
 
 
 @app.route('/set_controls', methods=['POST', 'GET'])
 def set_controls():
     sensorname = request.form['sensorname']
     speed = request.form['speed']
-    ui.debug(sensorname, speed)
-    for sensor in sensors_all.values():
-        if sensor.SensorType == 7 and sensorname == sensor.Name:
-            ui.debug(sensor.Name)
-            try:
-                sensor.Control.SetSoftware(speed)
-            except AttributeError:
-                ui.debug('Can\'t control this.')
-    return speed
+    return gui.cset_controls(sensorname, speed)
 
 
 @app.route('/stop_controls')
 def stop_controls():
-    stop(handle)
-    return '200'
+    return gui.cstop_controls()
 
 
-@app.route('/test_controls')
-def test_controls():
-    html = []
-    for sensor in sensors_all.values():
-        ident = str(sensor.Identifier)
-        sensor.set_Name(config['main'][ident.replace('/', '')])
-        if sensor.SensorType == 7:
-            html.append(sensor)
-    return render_template('test_controls.html', html=html)
+class Gui:
+    def __init__(self, handle, config, sensors_all):
+        self.handle = handle
+        self.config = config
+        self.sensors_all = sensors_all
+        self.window = None
 
+    def window(self, window):
+        self.window(window)
 
-@app.route('/minimize')
-def minimize():
-    window.minimize()
-    window.load_url('http://localhost')
-    return 'minimized'
+    def cindex(self):
+        rules = Config().show(self.config)
+        return render_template('index.html', rules=rules, sensors_all=self.sensors_all)
 
+    def cclose(self):
+        stop(self.handle)
+        self.window.destroy()
+        sys.exit(0)
 
-@app.route('/close')
-def close():
-    stop(handle)
-    window.destroy()
-    sys.exit(0)
+    def cminimize(self):
+        self.window.minimize()
+        self.window.load_url('http://localhost')
+        return 'minimized'
 
+    def ctemplate_sensors(self):
+        sensors_all = get_hardware_sensors(self.handle, self.config)
+        return render_template('sensors.html', sensors_all=sensors_all)
 
-@app.route('/template_sensors')
-def template_sensors():
-    sensors_all = get_hardware_sensors(handle, config)
-    return render_template('sensors.html', sensors_all=sensors_all)
+    def ctest_controls(self):
+        html = []
+        for sensor in self.sensors_all.values():
+            ident = str(sensor.Identifier)
+            sensor.set_Name(self.config['main'][ident.replace('/', '')])
+            if sensor.SensorType == 7:
+                html.append(sensor)
+        return render_template('test_controls.html', html=html)
 
+    def cstop_controls(self):
+        stop(self.handle)
+        return '200'
 
-@app.route('/')
-def index():
-    if config:
-        rules = config_show(config)
-        return render_template('index.html', rules=rules, sensors_all=sensors_all)
-    else:
-        show_menu(handle, config, sensors_all)
-    #else:
-    #    config_init(sensors_all)
-    #    show_menu(handle, config, sensors_all)
+    def cset_controls(self, sensorname, speed):
+        ui.debug(sensorname, speed)
+        for sensor in self.sensors_all.values():
+            if sensor.SensorType == 7 and sensorname == sensor.Name:
+                ui.debug(sensor.Name)
+                try:
+                    sensor.Control.SetSoftware(speed)
+                except AttributeError:
+                    ui.debug('Can\'t control this.')
+        return speed
 
 
 def start_server():
     app.run(host='localhost', port=80)
-    while True:
-        sleep(1)
-        window.load_url('http://localhost')
 
 
-if __name__ == '__main__':
-    config = config_load()
-    handle = initialize_lhm()
-    sensors_all = get_hardware_sensors(handle, config)
+def start(gui):
     t = threading.Thread(target=start_server)
     t.daemon = True
     t.start()
-
+    #settings.update({
+    #    'no-proxy-server': True
+    #})
     window = webview.create_window('SuckControl', 'http://localhost', frameless=True, min_size=(1190, 740))
+    gui.window = window
     webview.start(gui='cef', debug=True)
-    sys.exit()
+    exit()
+
+
+config = Config().load()
+handle = initialize_lhm()
+sensors_all = get_hardware_sensors(handle, config)
+gui = Gui(handle, config, sensors_all)
+
+
+def get_data():
+    return handle, config, sensors_all, gui

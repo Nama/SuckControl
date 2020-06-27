@@ -1,67 +1,16 @@
-import clr
-import sys
 import cli_ui as ui
+from gui import get_data, start
 from time import sleep
 from numpy import interp
-from os import path, getcwd
+from sys import exit, argv
 from threading import Thread
+from usersetup import *
+from configcontrol import Config
 from signal import signal, SIGINT
 
-ui.CONFIG["verbose"] = False
+ui.CONFIG['verbose'] = False
 ui.CONFIG['color'] = 'never'
 terminate = False
-
-
-def initialize_lhm():
-    try:
-        lhm_path = sys._MEIPASS
-    except AttributeError:
-        lhm_path = getcwd()
-    file = path.join(lhm_path, 'LibreHardwareMonitorLib.dll')
-    clr.AddReference(file)
-    from LibreHardwareMonitor import Hardware
-    handle = Hardware.Computer()
-    handle.IsMotherboardEnabled = True
-    handle.IsControllerEnabled = True
-    handle.IsGpuEnabled = True
-    handle.IsCpuEnabled = True
-    handle.IsStorageEnabled = True
-    handle.Open()
-    return handle
-
-
-def stop(handle):
-    for hw in handle.Hardware:
-        hw.Close()
-        for shw in hw.SubHardware:
-            shw.Close()
-
-
-def get_hardware_sensors(handle, config):
-    sensors_all = {}
-    for hw in handle.Hardware:
-        hw.Update()
-        for sensor in hw.Sensors:
-            if sensor.SensorType in (2, 7):
-                ident = str(sensor.Identifier).replace('/', '')
-                sensors_all[ident] = sensor
-                try:
-                    sensor.set_Name(config['main'][ident])
-                except TypeError:
-                    pass
-                ui.debug(sensor.Name)
-        for shw in hw.SubHardware:
-            shw.Update()
-            for sensor in shw.Sensors:
-                if sensor.SensorType in (2, 7):
-                    ident = str(sensor.Identifier).replace('/', '')
-                    sensors_all[ident] = sensor
-                    try:
-                        sensor.set_Name(config['main'][ident])
-                    except TypeError:
-                        pass
-                    ui.debug(sensor.Name)
-    return sensors_all
 
 
 def _control_speed(sensors_all, temp, control, points):
@@ -69,7 +18,7 @@ def _control_speed(sensors_all, temp, control, points):
     sensor_control = sensors_all[control]
     while True:
         if terminate:
-            sys.exit()
+            exit()
         sleep(1.3)
         to_set = None
         temp_value = int(sensor_temp.Value)
@@ -112,10 +61,7 @@ def handler(signal_received, frame):
     terminate = True
 
 
-def start(handle, config, sensors_all):
-    if len(config['user']) == 0:
-        ui.error('No rules for fan speeds found. Add new rules.')
-        return
+def daemon(handle, config, sensors_all):
     ui.debug('Config OK, I guess')
     signal(SIGINT, handler)
     for rule in config['user']:
@@ -133,4 +79,30 @@ def start(handle, config, sensors_all):
             # Wait for SIGTERM
             stop(handle)
             ui.info_2('Exiting.')
-            sys.exit(0)
+            exit(0)
+
+
+if __name__ == '__main__':
+    #config = Config().load()
+    #handle = initialize_lhm()
+    #sensors_all = get_hardware_sensors(handle, config)
+    handle, config, sensors_all, gui = get_data()
+    #gui = Gui(handle, config, sensors_all)
+    if config:
+        if len(config['user']) == 0:
+            ui.error('No rules for fan speeds found. Add new rules.')
+            # Start gui
+            start(gui)
+        try:
+            param = argv[1]
+        except IndexError:
+            param = None
+        if param == '--daemon':
+            daemon(handle, config, sensors_all)
+            # if start() aborts cause of an error
+            start(gui)
+        else:
+            start(gui)
+    else:
+        Config().init(sensors_all)
+        start(gui)

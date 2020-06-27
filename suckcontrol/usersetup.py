@@ -1,5 +1,60 @@
+import clr
+import sys
 import cli_ui as ui
 from time import sleep
+from os import path, getcwd
+
+
+def initialize_lhm():
+    try:
+        lhm_path = sys._MEIPASS
+    except AttributeError:
+        lhm_path = getcwd()
+    file = path.join(lhm_path, 'LibreHardwareMonitorLib.dll')
+    clr.AddReference(file)
+    from LibreHardwareMonitor import Hardware
+    handle = Hardware.Computer()
+    handle.IsMotherboardEnabled = True
+    handle.IsControllerEnabled = True
+    handle.IsGpuEnabled = True
+    handle.IsCpuEnabled = True
+    handle.IsStorageEnabled = True
+    handle.Open()
+    return handle
+
+
+def stop(handle):
+    for hw in handle.Hardware:
+        hw.Close()
+        for shw in hw.SubHardware:
+            shw.Close()
+
+
+def get_hardware_sensors(handle, config):
+    sensors_all = {}
+    for hw in handle.Hardware:
+        hw.Update()
+        for sensor in hw.Sensors:
+            if sensor.SensorType in (2, 7):
+                ident = str(sensor.Identifier).replace('/', '')
+                sensors_all[ident] = sensor
+                try:
+                    sensor.set_Name(config['main'][ident])
+                except TypeError:
+                    pass
+                ui.debug(sensor.Name)
+        for shw in hw.SubHardware:
+            shw.Update()
+            for sensor in shw.Sensors:
+                if sensor.SensorType in (2, 7):
+                    ident = str(sensor.Identifier).replace('/', '')
+                    sensors_all[ident] = sensor
+                    try:
+                        sensor.set_Name(config['main'][ident])
+                    except TypeError:
+                        pass
+                    ui.debug(sensor.Name)
+    return sensors_all
 
 
 def set_sensor_names(config, sensors_all):
