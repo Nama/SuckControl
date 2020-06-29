@@ -7,7 +7,7 @@ from os import path, getcwd
 from threading import Thread
 from signal import signal, SIGINT
 
-ui.CONFIG["verbose"] = False
+ui.CONFIG["verbose"] = True
 ui.CONFIG['color'] = 'never'
 terminate = False
 
@@ -49,7 +49,6 @@ def get_hardware_sensors(handle, config):
                     sensor.set_Name(config['main'][ident])
                 except TypeError:
                     pass
-                ui.debug(sensor.Name)
         for shw in hw.SubHardware:
             shw.Update()
             for sensor in shw.Sensors:
@@ -60,7 +59,6 @@ def get_hardware_sensors(handle, config):
                         sensor.set_Name(config['main'][ident])
                     except TypeError:
                         pass
-                    ui.debug(sensor.Name)
     return sensors_all
 
 
@@ -74,6 +72,8 @@ def _control_speed(sensors_all, temp, control, points):
         to_set = None
         temp_value = int(sensor_temp.Value)
         control_value = int(sensor_control.Value)
+        ui.debug('Control: {}'.format(sensor_control.Name))
+        ui.debug('Temp: {}'.format(temp_value))
         if temp_value < points[0][0]:
             # Temp is below first point
             ui.debug('Too cold')
@@ -91,14 +91,12 @@ def _control_speed(sensors_all, temp, control, points):
                     point_next = points[next]
                     if temp_value in range(point[0], point_next[0]):
                         # Temp is between point[0] and point_next[0]
-                        ui.debug(point)
                         xp = [point[0], point_next[0]]
                         fp = [point[1], point_next[1]]
                         to_set = interp(temp_value, xp, fp)
                         break
-        ui.debug(sensor_control.Name, control_value, to_set)
+        ui.debug('Before change: {}\nAfter change: {}\n'.format(control_value, to_set))
         if control_value != to_set and to_set is not None:
-            ui.debug(to_set)
             try:
                 sensor_control.Control.SetSoftware(to_set)
             except AttributeError:
@@ -129,6 +127,8 @@ def start(handle, config, sensors_all):
         ui.debug('daemon started')
     while True:
         sleep(1)
+        # Update the sensor values
+        sensors_all = get_hardware_sensors(handle, config)
         if terminate:
             # Wait for SIGTERM
             stop(handle)
