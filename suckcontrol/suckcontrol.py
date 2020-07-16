@@ -4,11 +4,10 @@ from time import sleep
 from numpy import interp
 from sys import exit, argv
 from threading import Thread
-from usersetup import *
-from configcontrol import Config
+from configcontrol import update_hardware_sensors, stop
 from signal import signal, SIGINT
 
-ui.CONFIG['verbose'] = False
+ui.CONFIG['verbose'] = True
 ui.CONFIG['color'] = 'never'
 terminate = False
 
@@ -23,6 +22,8 @@ def _control_speed(sensors_all, temp, control, points):
         to_set = None
         temp_value = int(sensor_temp.Value)
         control_value = int(sensor_control.Value)
+        ui.debug('Sensor: {}'.format(sensor_control.Name))
+        ui.debug('Temp: {}'.format(temp_value))
         if temp_value < points[0][0]:
             # Temp is below first point
             ui.debug('Too cold')
@@ -40,30 +41,28 @@ def _control_speed(sensors_all, temp, control, points):
                     point_next = points[next]
                     if temp_value in range(point[0], point_next[0]):
                         # Temp is between point[0] and point_next[0]
-                        ui.debug(point)
                         xp = [point[0], point_next[0]]
                         fp = [point[1], point_next[1]]
                         to_set = interp(temp_value, xp, fp)
                         break
-        ui.debug(sensor_control.Name, control_value, to_set)
+        ui.debug('Before change: {}\nAfter change: {}\n'.format(control_value, to_set))
         if control_value != to_set and to_set is not None:
-            ui.debug(to_set)
             try:
                 sensor_control.Control.SetSoftware(to_set)
             except AttributeError:
                 ui.error('Can\'t control this sensor: {}'.format(sensor_control.Name))
 
 
-def handler(signal_received, frame):
+def _handler(signal_received, frame):
     # Since we can't get handle here, use terminate
     ui.info_1('Setting fans to default...')
     global terminate
     terminate = True
 
 
-def daemon(handle, config, sensors_all):
+def _daemon(handle, config, sensors_all):
     ui.debug('Config OK, I guess')
-    signal(SIGINT, handler)
+    signal(SIGINT, _handler)
     for rule in config['user']:
         temp = rule['sensor_temp']
         control = rule['sensor_control']
@@ -75,6 +74,8 @@ def daemon(handle, config, sensors_all):
         ui.debug('daemon started')
     while True:
         sleep(1)
+        # Update the sensor values
+        update_hardware_sensors(handle)
         if terminate:
             # Wait for SIGTERM
             stop(handle)
@@ -82,27 +83,35 @@ def daemon(handle, config, sensors_all):
             exit(0)
 
 
-if __name__ == '__main__':
-    #config = Config().load()
-    #handle = initialize_lhm()
-    #sensors_all = get_hardware_sensors(handle, config)
-    handle, config, sensors_all, gui = get_data()
-    #gui = Gui(handle, config, sensors_all)
-    if config:
-        if len(config['user']) == 0:
-            ui.error('No rules for fan speeds found. Add new rules.')
-            # Start gui
-            start(gui)
-        try:
-            param = argv[1]
-        except IndexError:
-            param = None
-        if param == '--daemon':
-            daemon(handle, config, sensors_all)
-            # if start() aborts cause of an error
-            start(gui)
-        else:
-            start(gui)
-    else:
-        Config().init(sensors_all)
-        start(gui)
+handle, config, sensors_all, gui = get_data()
+try:
+    param = argv[1]
+except IndexError:
+    param = None
+if param == '--daemon':
+    _daemon(handle, config, sensors_all)
+    # if daemon() aborts cause of an error
+    start(gui)
+else:
+    start(gui)
+
+#if __name__ == '__main__':
+#    handle, config, sensors_all, gui = get_data()
+#    if config:
+#        if len(config['user']) == 0:
+#            ui.error('No rules for fan speeds found. Add new rules.')
+#            # Start gui
+#            start(gui)
+#        try:
+#            param = argv[1]
+#        except IndexError:
+#            param = None
+#        if param == '--daemon':
+#            _daemon(handle, config, sensors_all)
+#            # if daemon() aborts cause of an error
+#            start(gui)
+#        else:
+#            start(gui)
+#    else:
+#        Config().init(sensors_all)
+#        start(gui)

@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="mdl-grid">
+    <div class="mdl-cell mdl-cell--2-col">
+        <ul class='mdl-list'>
+    {% for sensor in sensors_all.items() if sensor[1].SensorType == 2 %}
+            <li class="mdl-list__item mdl-list__item--two-line">
+                <span class="mdl-list__item-primary-content">
+                    <span>{{ sensor[1].Name }}</span>
+                    <span class="mdl-list__item-sub-title">{{ sensor[1].Value }}°C</span>
+                </span>
+                <span class="mdl-list__item-secondary-action">
+                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="{{ sensor[0] }}">
+                    <input type="radio" id="{{ sensor[0] }}" name="temps" class="mdl-radio__button" />
+                </label>
+                </span>
+            </li>
+    {% endfor %}
+        </ul>
+    </div>
+    <div class="mdl-cell mdl-cell--1-col"></div>
+    <div class="mdl-cell mdl-cell--2-col">
+        <ul class='mdl-list'>
+    {% for sensor in sensors_all.items() if sensor[1].SensorType == 7 %}
+    <li class="mdl-list__item mdl-list__item--two-line">
+        <span class="mdl-list__item-primary-content">
+            <span>{{ sensor[1].Name }}</span>
+            <span class="mdl-list__item-sub-title">{{ sensor[1].Value }}%</span>
+        </span>
+        <span class="mdl-list__item-secondary-action">
+        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="{{ sensor[0] }}">
+            <input type="checkbox" id="{{ sensor[0] }}" class="mdl-checkbox__input" />
+        </label>
+        </span>
+    </li>
+    {% endfor %}
+        </ul>
+    </div>
+    <div class="mdl-cell mdl-cell--2-col"></div>
+    <div class="mdl-cell mdl-cell--5-col">
+        <p>
+            Choose a temperature sensor, then one or more fans you want to control. All fans will be set to the same speed.
+            You should check the <a href="github">cooling guideline</a>.
+        </p>
+        <p>
+            Enter the points (temperatures (°C) and fan speeds (%)) of the curve:
+        </p>
+        {% for point in range(6) %}
+        <div class="mdl-grid">
+            <div class="mdl-cell--6-col">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <label class="mdl-textfield__label" for="temp{{ loop.index0 }}">Temperature in °C</label>
+                    <input class="mdl-textfield__input" id="temp{{ loop.index0 }}" type="text" />
+                </div>
+            </div>
+            <div class="mdl-cell--6-col">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <label class="mdl-textfield__label" for="control{{ loop.index0 }}">Speed in %</label>
+                    <input class="mdl-textfield__input" id="control{{ loop.index0 }}" type="text" />
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent save_rule" onclick="saverule()">Save</button>
+</div>
+    <div id="blubb"></div>
+<script>
+function saverule() {
+    var checkboxes = document.querySelectorAll("input");
+    document.getElementById('blubb').innerHTML = '';
+    for (var index = 0; index < checkboxes.length; ++index) {
+        if (checkboxes[index].checked == true) {
+            document.getElementById('blubb').innerHTML = document.getElementById('blubb').innerHTML + '<br>' + checkboxes[index].id;
+        }
+        if (checkboxes[index].type == 'text' && checkboxes[index].value != '') {
+            document.getElementById('blubb').innerHTML = document.getElementById('blubb').innerHTML + '<br>' + checkboxes[index].id;
+        }
+    }
+}
+</script>
+{% endblock %}

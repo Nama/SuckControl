@@ -23,18 +23,20 @@ def initialize_lhm():
 
 
 def get_sensors(sensor):
-    if sensor.SensorType in (2, 7):
-        if sensor.SensorType == 2:
-            stype = 'Temp'
-        else:
-            stype = 'Cont'
-            try:
-                sensor.Control.SetSoftware(100)
-                sleep(2)
-                sensor.Control.SetDefault()
-            except:
-                print('Couldn\'t control ' + sensor.Name)
-        print(stype, sensor.Name, sensor.Value, sensor.Identifier)
+    if sensor.SensorType == 2:
+        stype = ('Temp', '°C')
+    elif sensor.SensorType == 5:
+        stype = ('Fan', 'RPM')
+    elif sensor.SensorType == 7:
+        stype = ('Cont', '%')
+        try:
+            sensor.Control.SetSoftware(100)
+            sleep(2)
+            sensor.Control.SetDefault()
+        except:
+            print('Couldn\'t control ' + sensor.Name)
+    if sensor.SensorType in (2, 5, 7):
+        print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
 
 
 def fetch_temp(handle):

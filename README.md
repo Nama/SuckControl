@@ -8,6 +8,7 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
   * Windows will complain about it, read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe)
   * You need to (*identify and*) name all the sensors you want to use
     * Or just keep the default name
+    * Don't name two sensors of the same type exactly the same
     * [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) could help identifying
 * Directly after, the setup for the first rule (*temperature curve*) starts 
   * Select a temperature sensor

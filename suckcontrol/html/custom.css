@@ -10,6 +10,7 @@ CSS from https://fonts.googleapis.com/icon?family=Material+Icons
   src: url(MaterialIcons-Regular.ttf) format('truetype');
 }
 
+
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;
@@ -26,15 +27,14 @@ CSS from https://fonts.googleapis.com/icon?family=Material+Icons
   -moz-osx-font-smoothing: grayscale;
 }
 
-
 .sensor-card.mdl-card {
     width: 100%;
     min-height: 20px !important;
     background: #00bcd4;
 }
-.index-card.mdl-card {
+.rules-card.mdl-card {
     width: 100%;
-    /*height: 200px;*/
+    height: 200px;
     background: #00bcd4;
 }
 .index-card > .mdl-card__actions {
@@ -62,4 +62,29 @@ CSS from https://fonts.googleapis.com/icon?family=Material+Icons
 
 table {
     width: 100%;
+}
+
+.add_rule {
+    position: fixed;
+    right: 25px;
+    bottom: 10px;
+}
+
+.save_rule {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mdl-list__item {
+    padding: 0 !important;
+}
+
+.mdl-list__item--two-line {
+    height: 0px !important;
+}
+
+a {
+    color: #0d47a1;
 }
