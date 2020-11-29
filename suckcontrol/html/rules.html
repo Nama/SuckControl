@@ -10,7 +10,7 @@
                 <tbody>
                 {% for point in rule[0] %}
                 <tr>
-                    <td>{{ point[0][1]}}</td><td>{{ point[1][1]}}</td>
+                    <td>{{ point[0]}}</td><td>{{ point[1]}}</td>
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -21,12 +21,12 @@
                 <i class="material-icons">delete</i>
             </a>
             <div class="mdl-layout-spacer"></div>
-            <label for="{{rule[2]}}" class="mdl-switch mdl-js-switch">
+            <label for="{{rule[2]}}" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
                 <input type="checkbox" id="{{rule[2]}}" class="mdl-switch__input">
+                <span class="mdl-switch__label">asd</span>
             </label>
         </div>
     </div>
 </div>
     {% endfor %}
-
 {% endif %}
