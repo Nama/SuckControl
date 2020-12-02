@@ -6,6 +6,18 @@ from json.decoder import JSONDecodeError
 from os import path, getcwd
 from shutil import move
 
+try:
+    root_path = sys._MEIPASS
+except AttributeError:
+    root_path = getcwd()
+
+
+def nvapiw():
+    nvapiw_file = path.join(root_path, 'NvAPIWrapper.dll')
+    clr.AddReference(nvapiw_file)
+    from NvAPIWrapper import GPU
+    return GPU.PhysicalGPU.GetPhysicalGPUs()
+
 
 class Config:
     def __init__(self):
@@ -54,12 +66,8 @@ class Config:
         self.save()
 
     def initialize_lhm(self):
-        try:
-            lhm_path = sys._MEIPASS
-        except AttributeError:
-            lhm_path = getcwd()
-        file = path.join(lhm_path, 'LibreHardwareMonitorLib.dll')
-        clr.AddReference(file)
+        lhm_file = path.join(root_path, 'LibreHardwareMonitorLib.dll')
+        clr.AddReference(lhm_file)
         from LibreHardwareMonitor import Hardware
         handle = Hardware.Computer()
         handle.IsMotherboardEnabled = True

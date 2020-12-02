@@ -28,6 +28,7 @@ def add_rule():
 
 @app.route('/minimize')
 def minimize():
+    # TODO: shouldnt be needed
     window.minimize()
     window.load_url('http://localhost')
     return 'minimized'
