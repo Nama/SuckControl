@@ -9,15 +9,15 @@
                 {{sensor.Value}}
             </div>
             <div class="mdl-card__actions mdl-card--border">
-                {% if sensor.SensorType == 2 %}
+                {% if sensor.SensorType == 3 %}
                 <i class="material-icons">wb_sunny</i>
                 <div class="mdl-layout-spacer"></div>
                 °C
-                {% elif sensor.SensorType == 5 %}
+                {% elif sensor.SensorType == 7 %}
                 <i class="material-icons">toys</i>
                 <div class="mdl-layout-spacer"></div>
                 RPM
-                {% else %}
+                {% elif sensor.SensorType == 9 %}
                 <i class="material-icons">keyboard</i>
                 <div class="mdl-layout-spacer"></div>
                 <i class="material-icons">speed</i>

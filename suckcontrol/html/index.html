@@ -9,10 +9,13 @@
     }
     async function run_loop() {
         while (true) {
-            await refresh('get_sensors', 'sensors')
-            await sleep(1000)
-            await refresh('get_rules', 'rules')
-            await sleep(1000)
+            if (document.visibilityState === 'visible') {
+                await refresh('get_sensors', 'sensors')
+                await sleep(1000)
+                await refresh('get_rules', 'rules')
+                await sleep(1000)
+            }
+            await sleep(100)
         }
     }
     async function refresh(link, id) {

@@ -30,9 +30,13 @@ def get_sensors(sensor):
     elif sensor.SensorType == 7:
         stype = ('Cont', '%')
         try:
-            sensor.Control.SetSoftware(100)
-            sleep(2)
-            sensor.Control.SetDefault()
+            if sensor.Name == 'GPU Fan':
+                #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
+                sensor.Control.SetSoftware(100)
+                #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
+                sleep(20)
+                sensor.Control.SetDefault()
+                print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
         except:
             print('Couldn\'t control ' + sensor.Name)
     if sensor.SensorType in (2, 5, 7):

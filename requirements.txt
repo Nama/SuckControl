@@ -1,5 +1,4 @@
-numpy==1.19.3
-pythonnet
+numpy
 setuptools
-pywebview
 Flask
+pythonnet

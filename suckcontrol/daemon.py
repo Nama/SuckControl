@@ -10,10 +10,6 @@ def _control_speed(config, temp, control, points, naw):
     sensors_all = config.sensors_all
     sensor_temp = sensors_all[temp]
     sensor_control = sensors_all[control]
-    #while True:
-    #if config.terminate:
-    #    break
-    #sleep(1.3)
     to_set = None
     temp_value = int(sensor_temp.Value)
     control_value = int(sensor_control.Value)
@@ -40,14 +36,15 @@ def _control_speed(config, temp, control, points, naw):
                     break
     logging.debug(f'Before change: {control_value} - After change: {to_set}')
     if control_value == to_set or to_set is None:
+        # No need to set
         return naw
     try:
         sensor_control.Control.SetSoftware(to_set)
     except AttributeError:
-        logging.warning(f'Can\'t control this sensor: {sensor_control.Name} - {sensor_control.Identifier}')
+        logging.debug(f'Can\'t control this sensor: {sensor_control.Name} - {sensor_control.Identifier}')
         # NvAPIWrapper fallback - LHM can't control turing (and newer?)
-        hw_ident = str(sensor_control.Identifier)
-        if not hw_ident.startswith('/gpu-nvidia/'):
+        hw_ident = str(sensor_control.Identifier).split('/')
+        if not hw_ident[1] == 'gpu-nvidia':
             return naw
         gpu_fan_set = False
         logging.debug(f'Nvidia GPU detected')
@@ -58,13 +55,13 @@ def _control_speed(config, temp, control, points, naw):
         for i, gpu in enumerate(naw):
             # This approach is not nice - need a way to identify LHM <-> NvAPIW controls
             logging.debug(f'GPU: {gpu} {i} {hw_ident}')
-            if str(i) in hw_ident:
+            if hw_ident[2] == str(i):
                 # Trying to make it work with multiple GPUs
                 for m, cooler in enumerate(gpu.CoolerInformation.Coolers):
                     # Set all fans of the GPU to that speed
                     gpu.CoolerInformation.SetCoolerSettings(m + 1, int(to_set))  # IDs start at 1
-                    gpu_fan_set = True
-                    logging.debug('Nvidia fan speed set')
+                gpu_fan_set = True
+                logging.debug('Nvidia fan speed set')
             if gpu_fan_set:
                 break
     return naw
@@ -75,7 +72,7 @@ def _update_rules(config):
     running_rules = []
     while True:
         # Update rules, for newly added ones
-        sleep(0.1)  # If no rules.
+        sleep(0.1)  # Incase there are no rules.
         config.get_hardware_sensors()
         for rule in config.config['user']:
             sleep(0.2)
@@ -87,7 +84,7 @@ def _update_rules(config):
             control = rule['sensor_control']
             points = rule['points']
             # Make the fans suck
-            naw = _control_speed(config, temp, control, points, naw)
+            #naw = _control_speed(config, temp, control, points, naw)
             #controller = Thread(target=_control_speed, args=(config, temp, control, points))
             #controller.start()
         if config.terminate:
