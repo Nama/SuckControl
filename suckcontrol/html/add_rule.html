@@ -3,44 +3,44 @@
 <div class="mdl-grid">
     <div class="mdl-cell mdl-cell--2-col">
         <ul class='mdl-list'>
-    {% for sensor in sensors_all.items() if sensor[1].SensorType == 3 %}
+            {% for sensor in sensors_all.items() if sensor[1].SensorType == 3 %}
             <li class="mdl-list__item mdl-list__item--two-line">
                 <span class="mdl-list__item-primary-content">
                     <span>{{ sensor[1].Name }}</span>
                     <span class="mdl-list__item-sub-title">{{ sensor[1].Value }}°C</span>
                 </span>
                 <span class="mdl-list__item-secondary-action">
-                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="{{ sensor[0] }}">
-                    <input type="radio" id="{{ sensor[0] }}" name="temps" class="mdl-radio__button" />
-                </label>
+                    <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="{{ sensor[0] }}">
+                        <input type="radio" id="{{ sensor[0] }}" name="temps" class="mdl-radio__button radiobutton" />
+                    </label>
                 </span>
             </li>
-    {% endfor %}
+            {% endfor %}
         </ul>
     </div>
     <div class="mdl-cell mdl-cell--1-col"></div>
     <div class="mdl-cell mdl-cell--2-col">
         <ul class='mdl-list'>
-    {% for sensor in sensors_all.items() if sensor[1].SensorType == 9 %}
-    <li class="mdl-list__item mdl-list__item--two-line">
-        <span class="mdl-list__item-primary-content">
-            <span>{{ sensor[1].Name }}</span>
-            <span class="mdl-list__item-sub-title">{{ sensor[1].Value }}%</span>
-        </span>
-        <span class="mdl-list__item-secondary-action">
-        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="{{ sensor[0] }}">
-            <input type="checkbox" id="{{ sensor[0] }}" class="mdl-checkbox__input" />
-        </label>
-        </span>
-    </li>
-    {% endfor %}
+            {% for sensor in sensors_all.items() if sensor[1].SensorType == 9 and sensor[0] not in controls %}
+            <li class="mdl-list__item mdl-list__item--two-line">
+                <span class="mdl-list__item-primary-content">
+                    <span>{{ sensor[1].Name }}</span>
+                    <span class="mdl-list__item-sub-title">{{ sensor[1].Value }}%</span>
+                </span>
+                <span class="mdl-list__item-secondary-action">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="{{ sensor[0] }}">
+                        <input type="checkbox" id="{{ sensor[0] }}" name="controls" class="mdl-checkbox__input checkbox" />
+                    </label>
+                </span>
+            </li>
+            {% endfor %}
         </ul>
     </div>
     <div class="mdl-cell mdl-cell--2-col"></div>
     <div class="mdl-cell mdl-cell--5-col">
         <p>
             Choose a temperature sensor, then one or more fans you want to control. All fans will be set to the same speed.
-            You should check the <a href="github">cooling guideline</a>.
+            {#You should check the <a href="github">cooling guideline</a>.#}
         </p>
         <p>
             Enter the points (temperatures (°C) and fan speeds (%)) of the curve:
@@ -50,33 +50,95 @@
             <div class="mdl-cell--6-col">
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <label class="mdl-textfield__label" for="temp{{ loop.index0 }}">Temperature in °C</label>
-                    <input class="mdl-textfield__input" id="temp{{ loop.index0 }}" type="text" />
+                    <input class="mdl-textfield__input tempsensor" id="temp{{ loop.index0 }}" name="temp{{ loop.index0 }}" type="number" pattern="[0-9]{0,3}" min="0" max="100" {% if loop.index0 == 0 %} required {% endif %}>
                 </div>
             </div>
             <div class="mdl-cell--6-col">
                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                     <label class="mdl-textfield__label" for="control{{ loop.index0 }}">Speed in %</label>
-                    <input class="mdl-textfield__input" id="control{{ loop.index0 }}" type="text" />
+                    <input class="mdl-textfield__input controlsensor" id="control{{ loop.index0 }}" name="control{{ loop.index0 }}" type="number" pattern="[0-9]{0,3}" min="0" max="100" {% if loop.index0 == 0 %} required {% endif %}>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent save_rule" onclick="saverule()">Save</button>
 </div>
-    <div id="blubb"></div>
+
+<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent save_rule" onclick="save_rule()">Save</button>
+
 <script>
-function saverule() {
-    var checkboxes = document.querySelectorAll("input");
-    document.getElementById('blubb').innerHTML = '';
-    for (var index = 0; index < checkboxes.length; ++index) {
-        if (checkboxes[index].checked == true) {
-            document.getElementById('blubb').innerHTML = document.getElementById('blubb').innerHTML + '<br>' + checkboxes[index].id;
-        }
-        if (checkboxes[index].type == 'text' && checkboxes[index].value != '') {
-            document.getElementById('blubb').innerHTML = document.getElementById('blubb').innerHTML + '<br>' + checkboxes[index].id;
+function save_rule() {
+    let data = {};
+    const radiobuttons = document.getElementsByClassName('radiobutton');
+    let radiochecked = false;
+    for (let index = 0; index < radiobuttons.length; ++index) {
+        if (radiobuttons[index].checked === true) {
+            radiochecked = true;
+            data['temp'] = radiobuttons[index].id;
+            break;
         }
     }
+    const checkboxes = document.getElementsByClassName('checkbox');
+    let boxeschecked = false;
+    let controls = [];
+    for (let index = 0; index < checkboxes.length; ++index) {
+        if (checkboxes[index].checked === true) {
+            boxeschecked = true;
+            controls.push(checkboxes[index].id);
+        }
+    }
+    if (radiochecked !== true || boxeschecked !== true) {
+        show_info('Please select at least one fan and one temperature sensor!')
+        return false
+    }
+    const tempsensors = document.getElementsByClassName('tempsensor');
+    const controlsensors = document.getElementsByClassName('controlsensor');
+    const tempvalues = check_errors(tempsensors);
+    const controlvalues = check_errors(controlsensors);
+    if (tempvalues[0] && controlvalues[0]) {
+        data['controls'] = controls;
+        data['tempvalues'] = tempvalues[1];
+        data['controlvalues'] = controlvalues[1];
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/save_rule', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify(data));
+        //window.location.replace('/');
+    }
+}
+
+function check_errors(inputs) {
+    let values = [];
+    let no_errors = true;
+    for (let index = 0; index < inputs.length; ++index) {
+        if (inputs[index].type === 'number' && inputs[index].value !== '') {
+            if (index !== 0) {
+                const inputtype = inputs[index].id.slice(0, -1);
+                let lastindex = index - 1;
+                let lastvalue = document.getElementById(inputtype + lastindex).value;
+                if (lastvalue >= inputs[index].value) {
+                    no_errors = false;
+                    const parent = inputs[index].closest('.mdl-textfield');
+                    parent.classList.add('is-invalid');
+                    let inputstring = inputtype === 'temp' ? 'Temperature' : 'Control';
+                    inputs[index].setCustomValidity(`${inputstring} of ${inputs[index].value} can\'t be lower then the last value: ${lastvalue}`);
+                    show_info(inputs[index].validationMessage);
+                }
+                else {
+                    values.push(parseInt(inputs[index].value));
+                }
+            }
+            else {
+                values.push(parseInt(inputs[index].value));
+                const validity = inputs[index].checkValidity();
+                if (validity === false) {
+                    no_errors = false;
+                    show_info(inputs[index].validationMessage);
+                }
+            }
+        }
+    }
+    return [no_errors, values]
 }
 </script>
 {% endblock %}

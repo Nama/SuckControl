@@ -1,4 +1,7 @@
 numpy
 setuptools
 Flask
+waitress
+winnotify
+infi.systray
 pythonnet

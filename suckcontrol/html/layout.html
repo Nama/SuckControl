@@ -3,41 +3,51 @@
     <head>
         <meta charset="UTF-8">
         <title>SuckControl</title>
+        <link rel="icon" href="html/favicon.ico">
         <script type="text/javascript" src="html/material.min.js"></script>
-        <!--<script type="text/javascript" src="/eel.js"></script>-->
         <link type="text/css" rel="stylesheet" href="html/material.min.css">
         <link type="text/css" rel="stylesheet" href="html/custom.css">
     </head>
     <body>
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-      <header class="mdl-layout__header">
-        <div class="mdl-layout__header-row">
-          <!-- Title -->
-          <span class="mdl-layout-title">SuckControl</span>
-          <!-- Add spacer, to align navigation to the right -->
-          <div class="mdl-layout-spacer"></div>
-          <!-- Navigation. We hide it in small screens. -->
-          <!--<nav class="mdl-navigation">
-            <a class="mdl-navigation__link" href="/minimize"><i class="material-icons">minimize</i></a>
-              <a class="mdl-navigation__link" href="/close"><i class="material-icons">close</i></a>
-          </nav>-->
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <!-- Title -->
+                <span class="mdl-layout-title">SuckControl</span>
+                <!-- Add spacer, to align navigation to the right -->
+                <div class="mdl-layout-spacer"></div>
+                <!-- Navigation. We hide it in small screens. -->
+                <!--<nav class="mdl-navigation">
+                </nav>-->
+            </div>
+        </header>
+            <div class="mdl-layout__drawer">
+                <span class="mdl-layout-title">Menu</span>
+                <nav class="mdl-navigation">
+                    <a class="mdl-navigation__link" href="/">Home</a>
+                    <a class="mdl-navigation__link" href="/test_controls">Test Fans</a>
+                </nav>
+            </div>
+            <main class="mdl-layout__content">
+                <div class="page-content">
+                    {%- block content %}
+                    {% endblock %}
+                </div>
+            </main>
         </div>
-      </header>
-      <div class="mdl-layout__drawer">
-        <span class="mdl-layout-title">Menu</span>
-        <nav class="mdl-navigation">
-          <a class="mdl-navigation__link" href="/test_controls">Test Fans</a>
-          <a class="mdl-navigation__link" href="">Link</a>
-          <a class="mdl-navigation__link" href="">Link</a>
-          <a class="mdl-navigation__link" href="">Link</a>
-        </nav>
-      </div>
-      <main class="mdl-layout__content">
-        <div class="page-content">
-            {%- block content %}
-            {% endblock %}
+        <div class="mdl-snackbar mdl-js-snackbar">
+            <div class="mdl-snackbar__text"></div>
+            <button type="button" class="mdl-snackbar__action"></button>
         </div>
-      </main>
-    </div>
+        <script>
+            function show_info(msg) {
+                let notification = document.querySelector('.mdl-js-snackbar');
+                let data = {
+                message: msg,
+                timeout: 10000
+            };
+                notification.MaterialSnackbar.showSnackbar(data);
+            }
+        </script>
     </body>
 </html>

@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="mdl-grid" id="rules"></div>
-<div id="sensors"></div>
+<div class="mdl-grid sensors" id="sensors"></div>
 <button class="mdl-button mdl-js-button mdl-button--accent mdl-button--fab add_rule" onclick="window.open('/add_rule', '_self')">+</button>
 <script>
     function sleep(ms) {
@@ -11,21 +11,77 @@
         while (true) {
             if (document.visibilityState === 'visible') {
                 await refresh('get_sensors', 'sensors')
-                await sleep(1000)
                 await refresh('get_rules', 'rules')
                 await sleep(1000)
+                //await sleep(1000)
             }
             await sleep(100)
         }
     }
+    async function rotation() {
+        const sensors = document.getElementsByClassName('rpm_icon')
+        for (let index = 0; index < sensors.length; ++index) {
+            const sensor = sensors[index];
+            let control_value = '';
+            let nothing = '';
+            try {
+                control_value = document.getElementById(sensor.id.replace('RPM-', '')).value;
+            }
+            catch {
+                // nVidia GPU I assume...
+                nothing = '';
+            }
+            //console.log(sensor.id, control_value);
+            if (control_value !== '0') {
+                const speed = 5000 - ((5000 / 100) * control_value)
+                sensor.style.animationDuration = speed + 'ms'
+            }
+        }
+    }
     async function refresh(link, id) {
-        var xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
         xhr.open('GET', link, true);
-        xhr.onreadystatechange = function () {
+        xhr.onreadystatechange = async function () {
             document.getElementById(id).innerHTML = this.responseText;
+            componentHandler.upgradeAllRegistered()  // Needed, so the newly loaded toggles and sliders are decorated
+            await rotation();
         };
         xhr.send();
+
     }
     run_loop()
+
+    function stop_controls() {
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/stop_controls', true);
+        xhr.send();
+    }
+
+    function setSlider(id, value) {
+        let data = new FormData();
+        data.append('sensorname', id);
+        data.append('speed', value);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/set_controls', true);
+        xhr.send(data);
+    }
+
+    function delete_rule(id) {
+        let data = new FormData();
+        data.append('delete', id);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/delete_rule', true);
+        xhr.send(data);
+    }
+
+    function toggle_rule(element, id) {
+        const state = document.getElementById(element).checked;
+        let data = new FormData();
+        data.append('enable', state)
+        data.append('toggle', id);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/toggle_rule', true);
+        xhr.send(data);
+    }
 </script>
 {% endblock %}

@@ -3,24 +3,16 @@ import sys
 import logging
 from json import dump, load
 from json.decoder import JSONDecodeError
-from os import path, getcwd
+from pathlib import Path
 from shutil import move
-
-try:
-    root_path = sys._MEIPASS
-except AttributeError:
-    root_path = getcwd()
-
-
-def nvapiw():
-    nvapiw_file = path.join(root_path, 'NvAPIWrapper.dll')
-    clr.AddReference(nvapiw_file)
-    from NvAPIWrapper import GPU
-    return GPU.PhysicalGPU.GetPhysicalGPUs()
 
 
 class Config:
     def __init__(self):
+        try:
+            self.root_path = sys._MEIPASS
+        except AttributeError:
+            self.root_path = Path.cwd()
         self.terminate = False
         self.handle = self.initialize_lhm()
         self.path = 'config.json'
@@ -29,6 +21,7 @@ class Config:
         self.sensors_control = {}
         self.sensors_fan = {}
         self.sensors_temp = {}
+        self.nvapiw = None
 
     def set_name(self, ident, sensor):
         pass
@@ -40,20 +33,22 @@ class Config:
             configfile.close()
 
     def load(self):
+        moved = False
         try:
             with open(self.path, 'r') as configfile:
                 self.config = load(configfile)
                 logging.debug('Config loaded')
                 configfile.close()
-                return self.config
+                return moved
         except FileNotFoundError:
             logging.debug('No config found. Creating new one.')
         except JSONDecodeError:
-            # TODO: Tell in gui old config is renamed to corrupt.json.
             logging.warning('Corrupted config. Creating new one.')
             move(self.path, self.path + 'corrupt.json')
+            moved = True
         self.config = None
         self.init()
+        return moved
 
     def init(self):
         # Creating new config file
@@ -61,11 +56,20 @@ class Config:
         self.config = {'main': {}, 'user': []}
         self.get_hardware_sensors()
         for sensor in self.sensors_all.items():
-            self.config['main'][sensor[0]] = sensor[1].Name
+            try:
+                self.config['main'][sensor[0]] = sensor[1].Name
+            except AttributeError:
+                self.config['main'][sensor[0]] = sensor[1]['Name']
         self.save()
 
+    def initialize_nvapiw(self):
+        nvapiw_file = str(Path(self.root_path, 'NvAPIWrapper.dll'))
+        clr.AddReference(nvapiw_file)
+        from NvAPIWrapper import GPU
+        return GPU.PhysicalGPU.GetPhysicalGPUs()
+
     def initialize_lhm(self):
-        lhm_file = path.join(root_path, 'LibreHardwareMonitorLib.dll')
+        lhm_file = str(Path(self.root_path, 'LibreHardwareMonitorLib.dll'))
         clr.AddReference(lhm_file)
         from LibreHardwareMonitor import Hardware
         handle = Hardware.Computer()
@@ -154,7 +158,7 @@ class Config:
                     self.sensors_fan[ident] = {
                         'Identifier': ident,
                         'Name': name,
-                        'Value': cooler.CurrentFanSpeedInRPM,
+                        'Value': int(cooler.CurrentFanSpeedInRPM),
                         'SensorType': 7,
                         'SetSoftware': gpu.CoolerInformation.SetCoolerSettings,
                         'CoolerID': cooler.CoolerId
@@ -182,12 +186,8 @@ class Config:
                         changed = self.put_hardware_config(sensor)
 
         if nvidia:
-            gpus = nvapiw()
-            #for gpu in gpus:
-                #logging.debug(f'GPU: {gpu.FullName} {gpu.GPUId}')
+            gpus = self.naw()
             changed = self.put_hardware_config(gpus)
-                #for m, cooler in enumerate(gpu.CoolerInformation.Coolers):
-                #    logging.debug(f'Cooler {cooler.CoolerId} {cooler.CurrentFanSpeedInRPM}, {cooler.CurrentLevel}')
 
         if changed:
             logging.debug('Saving from get_hardware_sensors')
@@ -198,3 +198,8 @@ class Config:
             hw.Update()
             for shw in hw.SubHardware:
                 shw.Update()
+
+    def naw(self):
+        if not self.nvapiw:
+            self.nvapiw = self.initialize_nvapiw()
+        return self.nvapiw
