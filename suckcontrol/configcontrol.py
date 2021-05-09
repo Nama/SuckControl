@@ -97,7 +97,6 @@ class Config:
             else:
                 if ident in self.config['main']:
                     saved = True
-        # TODO: test with invalid identifiers in rules in config
         except KeyError:
             saved = False
         except TypeError:
@@ -146,7 +145,8 @@ class Config:
                         'Value': cooler.CurrentLevel,
                         'SensorType': 9,
                         'SetSoftware': gpu.CoolerInformation.SetCoolerSettings,
-                        'CoolerID': cooler.CoolerId
+                        'CoolerID': cooler.CoolerId,
+                        'nvidia': True
                     }
                     self.sensors_all[ident] = self.sensors_control[ident]
                     self.in_config(sensor, ident, nvidia)
@@ -174,10 +174,11 @@ class Config:
             hw.Update()
             for sensor in hw.Sensors:
                 if sensor.SensorType in (3, 7, 9):
-                    if 'gpu-nvidia' in str(sensor.Identifier) and 'control' in str(sensor.Identifier):
-                        # Don't add the control sensor, but the temp sensor
-                        nvidia = True
-                        continue
+                    if 'gpu-nvidia' in str(sensor.Identifier):
+                        if any(x in str(sensor.Identifier) for x in ('control', 'fan')):
+                            # Don't add the control sensor, but the temp sensor
+                            nvidia = True
+                            continue
                     changed = self.put_hardware_config(sensor)
             for shw in hw.SubHardware:
                 shw.Update()

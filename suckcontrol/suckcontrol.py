@@ -1,10 +1,11 @@
+import os
 import webbrowser
 import logging
+import notify
 from waitress import serve
 from pathlib import Path
 from configcontrol import Config
 from daemon import start_daemons
-import notify
 from flask import Flask, render_template, request, redirect, url_for
 from infi.systray import SysTrayIcon
 
@@ -17,10 +18,9 @@ app = Flask(__name__, static_folder=str(folder), template_folder=str(folder))
 flask_log = logging.getLogger('werkzeug')
 flask_log.setLevel(logging.WARNING)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
-logging.basicConfig(filename='suckcontrol.log', format='%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s', level=logging.WARNING)
+logging.basicConfig(filename=str(Path(config.root_path, 'suckcontrol.log')), format='%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s', level=logging.WARNING)
 
-# TODO: Function to rename sensors
-# TODO: Remove Test Controls site
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -37,7 +37,6 @@ def add_rule():
 @app.route('/save_rule', methods=['POST'])
 def save_rule():
     data = request.json
-    flask_log.debug(data)
     tempsensor = data['temp']
     controlsensors = data['controls']
     tempvalues = data['tempvalues']
@@ -61,17 +60,9 @@ def get_rules():
 @app.route('/get_sensors')
 def get_temps():
     # Get all the control sensors from config to disable slider
-    controls = [control['sensor_controls'] for control in config.config['user']]
+    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
     controls = [value for values in controls for value in values]
     return render_template('sensors.html', sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
-
-
-@app.route('/test_controls')
-def test_controls():
-    html = []
-    for sensor in config.sensors_control.values():
-        html.append(sensor)
-    return render_template('test_controls.html', html=html)
 
 
 @app.route('/set_controls', methods=['POST'])
@@ -116,10 +107,19 @@ def stop_controls():
     return '200'
 
 
+@app.route('/rename_sensor', methods=['POST'])
+def rename_sensor():
+    ident = request.form['ident']
+    new_name = request.form['name']
+    config.config['main'][ident] = new_name
+    config.save()
+    return '200'
+
+
 def close(systray):
     config.terminate = True
     config.stop()
-    #systray.shutdown()
+    os._exit(0)  # Needed, so flask exits -.-
 
 
 def open_browser(systray):

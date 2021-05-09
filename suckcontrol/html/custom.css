@@ -61,6 +61,10 @@ CSS from https://fonts.googleapis.com/icon?family=Material+Icons
     color: #fff;
 }
 
+.sensor-card > .mdl-card__title:hover {
+    cursor: pointer;
+}
+
 table {
     width: 100%;
 }
@@ -111,4 +115,8 @@ a {
     to {
         transform:rotate(360deg);
     }
+}
+
+.mdl-tooltip {
+    z-index: 500;
 }

@@ -2,6 +2,22 @@
 {% block content %}
 <div class="mdl-grid" id="rules"></div>
 <div class="mdl-grid sensors" id="sensors"></div>
+<dialog class="mdl-dialog">
+    <h4 class="mdl-dialog__title">Rename Sensor</h4>
+    <div class="mdl-dialog__content">
+<form action="#">
+    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="newname">
+        <label class="mdl-textfield__label" for="newname">New Name</label>
+        <p id="ident"></p>
+    </div>
+</form>
+    </div>
+    <div class="mdl-dialog__actions">
+        <button type="button" class="mdl-button close" onclick="new_name()">Save</button>
+        <button type="button" class="mdl-button close_other_button">Cancel</button>
+    </div>
+</dialog>
 <button class="mdl-button mdl-js-button mdl-button--accent mdl-button--fab add_rule" onclick="window.open('/add_rule', '_self')">+</button>
 <script>
     function sleep(ms) {
@@ -13,7 +29,6 @@
                 await refresh('get_sensors', 'sensors')
                 await refresh('get_rules', 'rules')
                 await sleep(1000)
-                //await sleep(1000)
             }
             await sleep(100)
         }
@@ -29,11 +44,11 @@
             }
             catch {
                 // nVidia GPU I assume...
+                control_value = 0;
                 nothing = '';
             }
-            //console.log(sensor.id, control_value);
             if (control_value !== '0') {
-                const speed = 5000 - ((5000 / 100) * control_value)
+                const speed = 1000 - ((1000 / 100) * control_value)
                 sensor.style.animationDuration = speed + 'ms'
             }
         }
@@ -83,5 +98,40 @@
         xhr.open('POST', '/toggle_rule', true);
         xhr.send(data);
     }
+
+    function rename(id) {
+        document.getElementById('newname').value = '';
+        document.getElementById('ident').innerText = 'Hardware Identifier: ' + id;
+        dialog.showModal();
+    }
+    function new_name() {
+        let data = new FormData();
+        data.append('ident', document.getElementById('ident').innerText.replace('Hardware Identifier: ', ''));
+        data.append('name', document.getElementById('newname').value);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/rename_sensor', true);
+        xhr.send(data);
+        data = null;
+    }
+    const dialog = document.querySelector('dialog');
+    if (!dialog.showModal) {
+        dialogPolyfill.registerDialog(dialog);
+    }
+    dialog.querySelector('.close').addEventListener('click', function () {
+        dialog.close();
+    });
+    dialog.querySelector('.close_other_button').addEventListener('click', function () {
+        dialog.close();
+    });
+    const save_newname = document.getElementById('newname');
+    save_newname.addEventListener('keyup', function(event) {
+    // Number 13 is the "Enter" key on the keyboard
+    if (event.keyCode === 13) {
+        // Cancel the default action, if needed
+        event.preventDefault();
+        new_name();
+        dialog.close();
+    }
+});
 </script>
 {% endblock %}

@@ -9,7 +9,15 @@ terminate = False
 def _control_speed(config, temp, controls, points):
     sensors_all = config.sensors_all
     sensor_temp = sensors_all[temp]
-    sensor_controls = [sensors_all[control] for control in controls]
+    sensor_controls = []
+    for control in controls:
+        try:
+            sensor_controls.append(sensors_all[control])
+        except KeyError:
+            continue
+    if not len(sensor_controls):
+        # No sensors to control, abort
+        return
     to_set = None
     temp_value = int(sensor_temp.Value)
     try:
@@ -64,29 +72,29 @@ def _control_speed(config, temp, controls, points):
 
 
 def _update_rules(config):
-    running_rules = []
     while True:
         # Update rules, for newly added ones
         sleep(0.1)  # Incase there are no rules.
         config.get_hardware_sensors()
         for rule in config.config['user']:
-            sleep(0.5)
+            sleep(0.2)
+            logging.error(config.terminate)
             if config.terminate:
                 break
             if not rule['enabled']:
                 continue
             config.update_hardware_sensors()
             temp = rule['sensor_temp']
-            running_rules.append(temp)
             controls = rule['sensor_controls']
             points = rule['points']
             # Make the fans suck
-            #_control_speed(config, temp, controls, points)
+            _control_speed(config, temp, controls, points)
         if config.terminate:
             break
 
 
 def start_daemons(config):
     update_rules = Thread(target=_update_rules, args=(config,))
+    update_rules.daemon = True
     update_rules.start()
-    logging.debug('daemon-threads started')
+    logging.debug('daemon-thread started')
