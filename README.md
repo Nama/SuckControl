@@ -3,33 +3,50 @@
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
 Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it, to see what is possible with your hardware.
 
+![Gui of SuckControl](gui.jpg)
+
+## Features
+* Define rules (curves) for every single fan with any temperature sensor
+  * If your BIOS allows to control the fan, SuckControl can, too
+  * All NVIDIA GPUs should be supported
+* Test the loudness or cooling with the sliders
+* Monitor the temperatures
+* New hardware is detected automatically
+* No need to restart after adding a new rule
+
 ## Usage
-* Run `SuckControl.exe` and follow the instructions of the first time setup
+* Run `SuckControl.exe`, a tray-icon appears, double-click it
   * Windows will complain about it, read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe)
-  * You need to (*identify and*) name all the sensors you want to use
-    * Or just keep the default name
-    * Don't name two sensors of the same type exactly the same
-    * [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) could help identifying
-* Directly after, the setup for the first rule (*temperature curve*) starts 
-  * Select a temperature sensor
-  * Select a control sensor
-  * Enter the first point of the curve. Temperature is Celsius, speed is in %: `<temp>,<speed>`. Like: `35,20`
-    * 100 is the highest value for `<temp>` and `<speed>`
-    * Repeat for every point
-  * If you are done, just press enter 
-* The config is now saved for the first time and you should see the menu
-* Close SuckControl and run it again with the parameter `--daemon`
-  * This doesn't let you configure anything, but runs in the background and sets the fan speeds according to the temperatures
-  * If SuckControl isn't able to control a fan, it will say so (*like in the first time setup*)
+* You should *identify and* name all the sensors you want to use
+  * Click on the names to rename
+    * Avoid naming two sensors of the same type exactly the same
+    * [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) could help identify
+* Test the loudness and/or cooling of the fans with the sliders
+  * Slider positions aren't saved
+* Click on the + Button to add a new rule
+  * Choose one temperature sensor, on which the following fans should depend on
+  * Choose at least one fan
+    * If you select more than one, all selected fans will be set to the same speed
+  * Enter the temperature value and the speed value
+    * You need to go from low to high, the next values can't be lower than the previous ones
+    * The value between two points is calculated automatically
+  * Click on Save and go back to the main view
 
 ### Important Notes
-* `CTRL + C` is catched and reverts the fans to default (letting the motherboard control them again). But any other method of killing the process, does not.
-  * But that's needed, since it would make only sense to run this tool from taskscheduler.
-* You can make this autostart with the task scheduler of Windows.
+* You can make SuckControl autostart with the task scheduler of Windows.
+* Content of the webinterface updates every second
+  * Makes it less fun to use
+  * Deleting or changing speed is shown after the update
+* Sliders of controls are disabled if the controls are in an enabled rule
+* Slider position/value isn't saved. That's only for testing purposes
+* Changes in the config.json are only active after a restart of SuckControl
+* Rules show only one fan, not all associated with the rule
 
 ## Building
-* After cloning, `pip -r requirements.txt`
+* After cloning and checkout, `pip -r requirements.txt`
 * Get `LibreHardwareMonitorLib.dll` and `HidSharp.dll` from LibreHardwareMonitor
-  * You can run `ui.py` in this state
+* Get [NvAPIWrapper.dll](https://github.com/falahati/NvAPIWrapper/)
+* Get Material Design Lite from getmdl.io
+* Get [dialog-polyfill](https://cdnjs.cloudflare.com/ajax/libs/dialog-polyfill/0.5.6/dialog-polyfill.min.js)
 * Install PyInstaller `pip install PyInstaller`
-* Run PyInstaller with: `-F --uac-admin --noupx --add-data LibreHardwareMonitorLib.dll;. --add-data HidSharp.dll;. --hidden-import pkg_resources.py2_warn suckcontrol.py`
+* Run PyInstaller with: `--name SuckControl --icon html/favicon.ico --clean -w -F --uac-admin --noupx -r build/suckcontrol/suckcontrol.exe.manifest,1 --add-data LibreHardwareMonitorLib.dll;. --add-data HidSharp.dll;. --add-data NvAPIWrapper.dll;. --add-data html;html --hidden-import pkg_resources.py2_warn --exclude win32com suckcontrol.py`
