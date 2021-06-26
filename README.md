@@ -34,9 +34,6 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 
 ### Important Notes
 * You can make SuckControl autostart with the task scheduler of Windows.
-* Content of the webinterface updates every second
-  * Makes it less fun to use
-  * Deleting or changing speed is shown after the update
 * Sliders of controls are disabled if the controls are in an enabled rule
 * Slider position/value isn't saved. That's only for testing purposes
 * Changes in the config.json are only active after a restart of SuckControl

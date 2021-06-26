@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="mdl-grid" id="rules"></div>
-<div class="mdl-grid sensors" id="sensors"></div>
+<div class="mdl-grid" id="rules">{% include 'rules.html' with context %}</div>
+<div class="mdl-grid sensors" id="sensors">{% include 'sensors.html' with context %}</div>
 <dialog class="mdl-dialog">
     <h4 class="mdl-dialog__title">Rename Sensor</h4>
     <div class="mdl-dialog__content">
@@ -27,7 +27,7 @@
         while (true) {
             if (document.visibilityState === 'visible') {
                 await refresh('get_sensors', 'sensors')
-                await refresh('get_rules', 'rules')
+                //await refresh('get_rules', 'rules')
                 await sleep(1000)
             }
             await sleep(100)
@@ -56,13 +56,20 @@
     async function refresh(link, id) {
         const xhr = new XMLHttpRequest();
         xhr.open('GET', link, true);
+        xhr.responseType = 'json';
         xhr.onreadystatechange = async function () {
-            document.getElementById(id).innerHTML = this.responseText;
+            let sensors = this.response
+            //document.getElementById(id).innerHTML = this.responseText;
+            //console.log(sensors)
+            let idents = Object.keys(sensors)
+            for (let index = 0; index < idents.length; ++index) {
+                let ident = idents[index]
+                document.getElementById(ident + 'value').innerText = Math.ceil(sensors[idents[index]]).toString()
+            }
             componentHandler.upgradeAllRegistered()  // Needed, so the newly loaded toggles and sliders are decorated
             await rotation();
         };
         xhr.send();
-
     }
     run_loop()
 

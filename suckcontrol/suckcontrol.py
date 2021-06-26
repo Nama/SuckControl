@@ -23,7 +23,10 @@ logging.basicConfig(filename=str(Path(config.root_path, 'suckcontrol.log')), for
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Get all the control sensors from config to disable slider
+    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
+    controls = [value for values in controls for value in values]
+    return render_template('index.html', rules=config.config['user'], config=config.config['main'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
 
 
 @app.route('/add_rule')
@@ -59,10 +62,14 @@ def get_rules():
 
 @app.route('/get_sensors')
 def get_temps():
+    sensors_list = {}
+    sensors = {**config.sensors_control, **config.sensors_fan, **config.sensors_temp}
+    for ident, sensor in sensors.items():
+        sensors_list[ident] = sensor.Value
     # Get all the control sensors from config to disable slider
     controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
     controls = [value for values in controls for value in values]
-    return render_template('sensors.html', sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
+    return sensors_list #, controls
 
 
 @app.route('/set_controls', methods=['POST'])

@@ -5,7 +5,7 @@
                 <div class="mdl-card__title mdl-card--expand" id="{{ sensor.Identifier|replace('/', '') }}" onclick="rename(this.id)">
                     {{ sensor.Name }}
                     <div class="mdl-layout-spacer"></div>
-                    {{ sensor.Value|int }}
+                    <span id="{{ sensor.Identifier|replace('/', '') }}value">{{ sensor.Value|int }}</span>
                 </div>
                 <div class="mdl-card__actions mdl-card--border">
                     {% if sensor.SensorType == 3 %}

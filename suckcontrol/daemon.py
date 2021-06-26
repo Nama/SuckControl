@@ -55,19 +55,8 @@ def _control_speed(config, temp, controls, points):
         try:
             control.Control.SetSoftware(to_set)
         except AttributeError:
-            try:
-                sensor_name = control.Name
-                nvidia = False
-            except AttributeError:
-                sensor_name = control['Name']
-                nvidia = True
-                logging.debug(f'Nvidia GPU detected')
-            if not nvidia:
-                logging.debug(f'Can\'t control this sensor: {sensor_name} - {control.Identifier}')
-                return
-            # NvAPIWrapper - LHM can't control turing (and newer?) and we can control all single fans on their own
-            control['SetSoftware'](control['CoolerID'], int(to_set))  # value is float, any float value sets the fans to 0
-
+            logging.debug(f'Can\'t control this sensor: {control.Name} - {control.Identifier}')
+            return
     return
 
 
