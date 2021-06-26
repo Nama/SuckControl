@@ -67,7 +67,6 @@ def _update_rules(config):
         config.get_hardware_sensors()
         for rule in config.config['user']:
             sleep(0.2)
-            logging.error(config.terminate)
             if config.terminate:
                 break
             if not rule['enabled']:

@@ -101,7 +101,7 @@ class Config:
 
     def put_hardware_config(self, sensor):
         ident = str(sensor.Identifier).replace('/', '')
-        if sensor.SensorType == 3:
+        if sensor.SensorType == 4:
             self.sensors_temp[ident] = sensor
         elif sensor.SensorType == 7:
             self.sensors_fan[ident] = sensor
@@ -117,12 +117,12 @@ class Config:
         for hw in self.handle.Hardware:
             hw.Update()
             for sensor in hw.Sensors:
-                if sensor.SensorType in (3, 7, 9):
+                if sensor.SensorType in (4, 7, 9):
                     changed = self.put_hardware_config(sensor)
             for shw in hw.SubHardware:
                 shw.Update()
                 for sensor in shw.Sensors:
-                    if sensor.SensorType in (3, 7, 9):
+                    if sensor.SensorType in (4, 7, 9):
                         changed = self.put_hardware_config(sensor)
 
         if changed:

@@ -13,22 +13,20 @@
                     <div class="mdl-layout-spacer"></div>
                     °C
                     {% elif sensor.SensorType == 7 %}
-                    <i class="material-icons rpm_icon" id="RPM-{{sensor.Name}}">toys</i>
+                    <i class="material-icons rpm_icon" id="{{ sensor.Identifier|replace('/', '') }}rpm">toys</i>
                     <div class="mdl-layout-spacer"></div>
                     RPM
                     {% elif sensor.SensorType == 9 %}
                     <i class="material-icons">speed</i>
-                    {% if not sensor.nvidia %}
                     <button onclick="stop_controls()" id="stop{{ sensor.Identifier|replace('/', '') }}" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
                         <i class="material-icons">slow_motion_video</i>
                     <span class="mdl-tooltip mdl-tooltip--top" data-mdl-for="stop{{ sensor.Identifier|replace('/', '') }}">
                         Stop manual controlling
                     </span>
                     </button>
-                    {% endif %}
                     <input type="number" class="hidden" value="{{ sensor.Value|int }}">
                     <p class="slider">
-                        <input id="{{sensor.Name}}" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="{{sensor.Value|int}}" step="1" onchange="setSlider(this.id, this.value)" {% if sensor.Identifier|replace('/', '') in controls %}disabled{% endif %}>
+                        <input id="{{ sensor.Identifier|replace('/', '') }}slider" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="{{sensor.Value|int}}" step="1" onchange="setSlider(this.id, this.value)" {% if sensor.Identifier|replace('/', '') in controls %}disabled{% endif %}>
                     </p>
                     %
                     {% endif %}

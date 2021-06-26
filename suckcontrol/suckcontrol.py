@@ -61,7 +61,7 @@ def get_rules():
 
 
 @app.route('/get_sensors')
-def get_temps():
+def get_sensors():
     sensors_list = {}
     sensors = {**config.sensors_control, **config.sensors_fan, **config.sensors_temp}
     for ident, sensor in sensors.items():
@@ -69,20 +69,16 @@ def get_temps():
     # Get all the control sensors from config to disable slider
     controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
     controls = [value for values in controls for value in values]
-    return sensors_list #, controls
+    data = {'sensors': sensors_list, 'controls': controls}
+    return data
 
 
 @app.route('/set_controls', methods=['POST'])
 def set_controls():
-    sensorname = request.form['sensorname']
+    ident = request.form['ident']
     speed = int(request.form['speed'])
-    for sensor in config.sensors_control.values():
-        try:
-            if sensorname == sensor.Name:
-                sensor.Control.SetSoftware(speed)
-        except AttributeError:
-            if sensorname == sensor['Name']:
-                sensor['SetSoftware'](sensor['CoolerID'], speed)
+    ident = ident.replace('slider', '')
+    config.sensors_control[ident].Control.SetSoftware(speed)
     return str(speed)
 
 

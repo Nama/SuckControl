@@ -20,58 +20,60 @@
 </dialog>
 <button class="mdl-button mdl-js-button mdl-button--accent mdl-button--fab add_rule" onclick="window.open('/add_rule', '_self')">+</button>
 <script>
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    async function run_loop() {
-        while (true) {
-            if (document.visibilityState === 'visible') {
-                await refresh('get_sensors', 'sensors')
-                //await refresh('get_rules', 'rules')
-                await sleep(1000)
-            }
-            await sleep(100)
-        }
-    }
-    async function rotation() {
-        const sensors = document.getElementsByClassName('rpm_icon')
+    update_sensors()
+
+    async function update_rotation() {
+        let sensors = document.getElementsByClassName('rpm_icon')
         for (let index = 0; index < sensors.length; ++index) {
             const sensor = sensors[index];
             let control_value = '';
             let nothing = '';
             try {
-                control_value = document.getElementById(sensor.id.replace('RPM-', '')).value;
+                control_value = parseInt(document.getElementById(sensor.id.replace('rpm', '').replace('fan', 'control') + 'value').innerText)
             }
             catch {
-                // nVidia GPU I assume...
-                control_value = 0;
+                control_value = 25;
                 nothing = '';
             }
-            if (control_value !== '0') {
-                const speed = 1000 - ((1000 / 100) * control_value)
-                sensor.style.animationDuration = speed + 'ms'
+            let speed
+            if (control_value !== 0) {
+                speed = 1000 - ((1000 / 100) * control_value)
             }
+            else {
+                speed = 0
+            }
+            sensor.style.animationDuration = speed + 'ms'
         }
     }
-    async function refresh(link, id) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', link, true);
-        xhr.responseType = 'json';
+    function update_sensors() {
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', 'get_sensors', false);
         xhr.onreadystatechange = async function () {
-            let sensors = this.response
-            //document.getElementById(id).innerHTML = this.responseText;
-            //console.log(sensors)
+            let response_data = JSON.parse(this.response)
+            let sensors = response_data['sensors']
+            let controls = response_data['controls']
             let idents = Object.keys(sensors)
             for (let index = 0; index < idents.length; ++index) {
                 let ident = idents[index]
-                document.getElementById(ident + 'value').innerText = Math.ceil(sensors[idents[index]]).toString()
+                let target = document.getElementById(ident + 'value')
+                target.innerText = Math.ceil(sensors[idents[index]]).toString()
+                if (ident.includes('control')) {
+                    let slider = document.getElementById(ident + 'slider')
+                    slider.value = sensors[idents[index]]
+                    if (controls.includes(ident)) {
+                        slider.disabled = true
+                    }
+                    else {
+                        slider.disabled = false
+                    }
+                }
             }
             componentHandler.upgradeAllRegistered()  // Needed, so the newly loaded toggles and sliders are decorated
-            await rotation();
+            await update_rotation()
+            setTimeout(update_sensors, 1000)
         };
         xhr.send();
     }
-    run_loop()
 
     function stop_controls() {
         let xhr = new XMLHttpRequest();
@@ -81,7 +83,7 @@
 
     function setSlider(id, value) {
         let data = new FormData();
-        data.append('sensorname', id);
+        data.append('ident', id);
         data.append('speed', value);
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/set_controls', true);
