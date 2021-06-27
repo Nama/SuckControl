@@ -119,12 +119,15 @@
     }
     function new_name() {
         let data = new FormData();
-        data.append('ident', document.getElementById('ident').innerText.replace('Hardware Identifier: ', ''));
-        data.append('name', document.getElementById('newname').value);
+        let newname = document.getElementById('newname').value
+        let ident = document.getElementById('ident').innerText.replace('Hardware Identifier: ', '')
+        data.append('ident', ident);
+        data.append('name', newname);
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/rename_sensor', true);
         xhr.send(data);
         data = null;
+        document.getElementById(ident).innerText = newname
     }
     const dialog = document.querySelector('dialog');
     if (!dialog.showModal) {
