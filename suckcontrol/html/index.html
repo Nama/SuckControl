@@ -141,9 +141,7 @@
     });
     const save_newname = document.getElementById('newname');
     save_newname.addEventListener('keyup', function(event) {
-    // Number 13 is the "Enter" key on the keyboard
-    if (event.keyCode === 13) {
-        // Cancel the default action, if needed
+    if (event.key === 'Enter') {
         event.preventDefault();
         new_name();
         dialog.close();
