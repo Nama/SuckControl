@@ -76,7 +76,16 @@
         };
         xhr.send();
     }
+    async function refresh_rules() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', 'get_rules', true);
+        xhr.onreadystatechange = async function () {
+            document.getElementById('rules').innerHTML = this.responseText;
+            componentHandler.upgradeAllRegistered()  // Needed, so the newly loaded toggles and sliders are decorated
+        };
+        xhr.send();
 
+    }
     function stop_controls() {
         let xhr = new XMLHttpRequest();
         xhr.open('GET', '/stop_controls', true);
@@ -98,8 +107,7 @@
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/delete_rule', true);
         xhr.send(data);
-        let rulecard = document.getElementById('rulecard' + id)
-        rulecard.remove()
+        refresh_rules()
     }
 
     function toggle_rule(element, id) {
@@ -128,6 +136,7 @@
         xhr.send(data);
         data = null;
         document.getElementById(ident + 'name').innerText = newname
+        refresh_rules()
     }
     const dialog = document.querySelector('dialog');
     if (!dialog.showModal) {

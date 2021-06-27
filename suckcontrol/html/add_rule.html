@@ -140,6 +140,12 @@ function check_errors(inputs) {
                 }
             }
         }
+        else {
+            if (index === 0) {
+                show_info('Enter at least one speed and one temperature value!')
+                no_errors = false
+            }
+        }
     }
     return [no_errors, values]
 }
