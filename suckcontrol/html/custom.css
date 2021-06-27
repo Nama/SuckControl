@@ -76,7 +76,7 @@ table {
     z-index: 100;
 }
 
-.save_rule {
+.add_rule_buttons {
     position: fixed;
     bottom: 80px;
     left: 50%;
