@@ -127,7 +127,7 @@
         xhr.open('POST', '/rename_sensor', true);
         xhr.send(data);
         data = null;
-        document.getElementById(ident).innerText = newname
+        document.getElementById(ident + 'name').innerText = newname
     }
     const dialog = document.querySelector('dialog');
     if (!dialog.showModal) {

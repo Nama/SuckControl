@@ -3,7 +3,7 @@
         {% for sensor in type.values() %}
             <div class="sensor-card index-card mdl-card mdl-shadow--2dp">
                 <div class="mdl-card__title mdl-card--expand" id="{{ sensor.Identifier|replace('/', '') }}" onclick="rename(this.id)">
-                    {{ sensor.Name }}
+                    <span id="{{ sensor.Identifier|replace('/', '') }}name">{{ sensor.Name }}</span>
                     <div class="mdl-layout-spacer"></div>
                     <span id="{{ sensor.Identifier|replace('/', '') }}value">{{ sensor.Value|int }}</span>
                 </div>
