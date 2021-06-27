@@ -61,7 +61,15 @@ def get_rules():
 
 
 @app.route('/get_sensors')
-def get_sensors():
+def get_temps():
+    # Get all the control sensors from config to disable slider
+    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
+    controls = [value for values in controls for value in values]
+    return render_template('sensors.html', sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
+
+
+@app.route('/get_sensor_values')
+def get_sensor_values():
     sensors_list = {}
     sensors = {**config.sensors_control, **config.sensors_fan, **config.sensors_temp}
     for ident, sensor in sensors.items():

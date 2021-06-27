@@ -56,10 +56,7 @@ class Config:
         self.config = {'main': {}, 'user': []}
         self.get_hardware_sensors()
         for sensor in self.sensors_all.items():
-            try:
-                self.config['main'][sensor[0]] = sensor[1].Name
-            except AttributeError:
-                self.config['main'][sensor[0]] = sensor[1]['Name']
+            self.config['main'][sensor[0]] = sensor[1].Name
         self.save()
 
     def initialize_lhm(self):
@@ -96,6 +93,7 @@ class Config:
         if not saved:
             self.config['main'][ident] = sensor.Name
             changed = True
+            logging.error('new hw' + str(sensor.Identifier))
 
         return changed
 
@@ -108,12 +106,13 @@ class Config:
         elif sensor.SensorType == 9:
             self.sensors_control[ident] = sensor
         self.sensors_all[ident] = sensor
-        changed = self.in_config(sensor, ident)
 
+        changed = self.in_config(sensor, ident)
         return changed
 
     def get_hardware_sensors(self):
         changed = False
+        self.handle.Reset()
         for hw in self.handle.Hardware:
             hw.Update()
             for sensor in hw.Sensors:
@@ -128,9 +127,3 @@ class Config:
         if changed:
             logging.debug('Saving from get_hardware_sensors')
             self.save()
-
-    def update_hardware_sensors(self):  # trash?
-        for hw in self.handle.Hardware:
-            hw.Update()
-            for shw in hw.SubHardware:
-                shw.Update()

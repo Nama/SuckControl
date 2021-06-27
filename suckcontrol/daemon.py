@@ -71,7 +71,6 @@ def _update_rules(config):
                 break
             if not rule['enabled']:
                 continue
-            config.update_hardware_sensors()
             temp = rule['sensor_temp']
             controls = rule['sensor_controls']
             points = rule['points']

@@ -47,26 +47,33 @@
     }
     function update_sensors() {
         let xhr = new XMLHttpRequest();
-        xhr.open('GET', 'get_sensors', false);
+        xhr.open('GET', 'get_sensor_values', false);
         xhr.onreadystatechange = async function () {
             let response_data = JSON.parse(this.response)
             let sensors = response_data['sensors']
             let controls = response_data['controls']
             let idents = Object.keys(sensors)
-            for (let index = 0; index < idents.length; ++index) {
-                let ident = idents[index]
-                // Update value
-                let target = document.getElementById(ident + 'value')
-                target.innerText = Math.ceil(sensors[idents[index]]).toString()
-                if (ident.includes('control')) {
-                    // Disable slider if sensor is in controls
-                    let slider = document.getElementById(ident + 'slider')
-                    slider.value = sensors[idents[index]]
-                    if (controls.includes(ident)) {
-                        slider.disabled = true
-                    }
-                    else {
-                        slider.disabled = false
+            let sensor_count = document.querySelectorAll('.sensor-card').length;
+            console.log(sensor_count)
+            if (idents.length !== sensor_count) {
+                console.log('refresh sensors')
+                await refresh('get_sensors', 'sensors')
+            }
+            else {
+                for (let index = 0; index < idents.length; ++index) {
+                    let ident = idents[index]
+                    // Update sensor value
+                    let target = document.getElementById(ident + 'value')
+                    target.innerText = Math.ceil(sensors[idents[index]]).toString()
+                    if (ident.includes('control')) {
+                        // Disable slider if sensor is in controls
+                        let slider = document.getElementById(ident + 'slider')
+                        slider.value = sensors[idents[index]]
+                        if (controls.includes(ident)) {
+                            slider.disabled = true
+                        } else {
+                            slider.disabled = false
+                        }
                     }
                 }
             }
@@ -76,16 +83,16 @@
         };
         xhr.send();
     }
-    async function refresh_rules() {
+    async function refresh(link, id) {
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', 'get_rules', true);
+        xhr.open('GET', link, true);
         xhr.onreadystatechange = async function () {
-            document.getElementById('rules').innerHTML = this.responseText;
+            document.getElementById(id).innerHTML = this.responseText;
             componentHandler.upgradeAllRegistered()  // Needed, so the newly loaded toggles and sliders are decorated
         };
         xhr.send();
-
     }
+
     function stop_controls() {
         let xhr = new XMLHttpRequest();
         xhr.open('GET', '/stop_controls', true);
@@ -107,7 +114,7 @@
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/delete_rule', true);
         xhr.send(data);
-        refresh_rules()
+        refresh('get_rules', 'rules')
     }
 
     function toggle_rule(element, id) {
@@ -136,7 +143,7 @@
         xhr.send(data);
         data = null;
         document.getElementById(ident + 'name').innerText = newname
-        refresh_rules()
+        refresh('get_rules', 'rules')
     }
     const dialog = document.querySelector('dialog');
     if (!dialog.showModal) {
