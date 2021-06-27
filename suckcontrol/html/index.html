@@ -55,9 +55,11 @@
             let idents = Object.keys(sensors)
             for (let index = 0; index < idents.length; ++index) {
                 let ident = idents[index]
+                // Update value
                 let target = document.getElementById(ident + 'value')
                 target.innerText = Math.ceil(sensors[idents[index]]).toString()
                 if (ident.includes('control')) {
+                    // Disable slider if sensor is in controls
                     let slider = document.getElementById(ident + 'slider')
                     slider.value = sensors[idents[index]]
                     if (controls.includes(ident)) {
@@ -96,6 +98,8 @@
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/delete_rule', true);
         xhr.send(data);
+        let rulecard = document.getElementById('rulecard' + id)
+        rulecard.remove()
     }
 
     function toggle_rule(element, id) {
