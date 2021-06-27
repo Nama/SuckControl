@@ -93,7 +93,6 @@ class Config:
         if not saved:
             self.config['main'][ident] = sensor.Name
             changed = True
-            logging.error('new hw' + str(sensor.Identifier))
 
         return changed
 
@@ -112,18 +111,21 @@ class Config:
 
     def get_hardware_sensors(self):
         changed = False
-        self.handle.Reset()
+        # Needed for new plugged in hardware, but resets speed
+        #self.handle.Reset()
         for hw in self.handle.Hardware:
             hw.Update()
             for sensor in hw.Sensors:
                 if sensor.SensorType in (4, 7, 9):
                     changed = self.put_hardware_config(sensor)
+                    if changed:
+                        logging.debug('Saving from get_hardware_sensors')
+                        self.save()
             for shw in hw.SubHardware:
                 shw.Update()
                 for sensor in shw.Sensors:
                     if sensor.SensorType in (4, 7, 9):
                         changed = self.put_hardware_config(sensor)
-
-        if changed:
-            logging.debug('Saving from get_hardware_sensors')
-            self.save()
+                        if changed:
+                            logging.debug('Saving from get_hardware_sensors')
+                            self.save()

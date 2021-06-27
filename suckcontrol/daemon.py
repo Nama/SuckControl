@@ -8,12 +8,17 @@ terminate = False
 
 def _control_speed(config, temp, controls, points):
     sensors_all = config.sensors_all
-    sensor_temp = sensors_all[temp]
+    try:
+        sensor_temp = sensors_all[temp]
+    except KeyError:
+        logging.warning(f'{temp} doesn\'t exists.')
+        return
     sensor_controls = []
     for control in controls:
         try:
             sensor_controls.append(sensors_all[control])
         except KeyError:
+            logging.warning(f'{control} doesn\'t exists.')
             continue
     if not len(sensor_controls):
         # No sensors to control, abort

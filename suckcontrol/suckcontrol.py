@@ -13,12 +13,12 @@ config = Config()
 config_moved = config.load()
 start_daemons(config)
 
+logging.basicConfig(filename=str(Path(config.root_path, 'suckcontrol.log')), format='%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s', level=logging.WARNING)
 folder = Path(config.root_path, 'html')
 app = Flask(__name__, static_folder=str(folder), template_folder=str(folder))
 flask_log = logging.getLogger('werkzeug')
 flask_log.setLevel(logging.WARNING)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
-logging.basicConfig(filename=str(Path(config.root_path, 'suckcontrol.log')), format='%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s', level=logging.WARNING)
 
 
 @app.route('/')
@@ -109,6 +109,7 @@ def disable_rule():
         to_set = False
     config.config['user'][rule_index]['enabled'] = to_set
     config.save()
+    config.stop()
     return '200'
 
 
