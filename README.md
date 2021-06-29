@@ -1,4 +1,5 @@
 # SuckControl
+![Icon](suckcontrol/html/favicon.ico)
 ## Description
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
 Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it, to see what is possible with your hardware.
