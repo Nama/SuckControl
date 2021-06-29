@@ -11,7 +11,6 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
   * All NVIDIA GPUs should be supported
 * Test the loudness or cooling with the sliders
 * Monitor the temperatures
-* New hardware is detected automatically
 * No need to restart after adding a new rule
 
 ## Usage
@@ -38,6 +37,7 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 * Slider position/value isn't saved. That's only for testing purposes
 * Changes in the config.json are only active after a restart of SuckControl
 * Rules show only one fan, not all associated with the rule
+* AMD Radeon 5000 and newer can't be controlled by LHM
 
 ## Building
 * After cloning and checkout, `pip -r requirements.txt`
