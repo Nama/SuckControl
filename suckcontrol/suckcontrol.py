@@ -92,30 +92,32 @@ def set_controls():
 
 @app.route('/delete_rule', methods=['POST'])
 def delete_rule():
-    to_delete = int(request.form['delete'])
-    config.config['user'].pop(to_delete)
+    index = int(request.form['delete'])
+    set_default(index)
+    config.config['user'].pop(index)
     config.save()
-    config.stop()  # Removed controls will be "freed" again
     return '200'
 
 
 @app.route('/toggle_rule', methods=['POST'])
 def disable_rule():
-    rule_index = int(request.form['toggle'])
+    index = int(request.form['toggle'])
     to_set = request.form['enable']
     if to_set == 'true':
         to_set = True
     else:
         to_set = False
-    config.config['user'][rule_index]['enabled'] = to_set
+    config.config['user'][index]['enabled'] = to_set
     config.save()
-    config.stop()
+    set_default(index)
     return '200'
 
 
-@app.route('/stop_controls')
+@app.route('/stop_controls', methods=['POST'])
 def stop_controls():
-    config.stop()
+    ident = request.form['ident']
+    ident = ident.replace('stop', '')
+    config.sensors_control[ident].Control.SetDefault()
     return '200'
 
 
@@ -126,6 +128,11 @@ def rename_sensor():
     config.config['main'][ident] = new_name
     config.save()
     return '200'
+
+
+def set_default(index):
+    for ident in config.config['user'][index]['sensor_controls']:
+        config.sensors_control[ident].Control.SetDefault()
 
 
 def close(systray):

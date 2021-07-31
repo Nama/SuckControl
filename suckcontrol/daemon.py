@@ -25,12 +25,8 @@ def _control_speed(config, temp, controls, points):
         return
     to_set = None
     temp_value = int(sensor_temp.Value)
-    try:
-        control_value = int(sensor_controls[0].Value)
-        logging.debug(f'Fan: {sensor_controls[0].Name}')
-    except AttributeError:
-        control_value = sensor_controls[0]['Value']
-        logging.debug(f'Fan: {sensor_controls[0]["Name"]}')
+    control_value = int(sensor_controls[0].Value)
+    logging.debug(f'Fan: {sensor_controls[0].Name}')
 
     logging.debug(f'Temp: {temp_value}')
     if temp_value < points[0][0]:
@@ -60,7 +56,7 @@ def _control_speed(config, temp, controls, points):
         try:
             control.Control.SetSoftware(to_set)
         except AttributeError:
-            logging.debug(f'Can\'t control this sensor: {control.Name} - {control.Identifier}')
+            logging.warning('Can\'t control this sensor: {control.Name} - {control.Identifier}')
             return
     return
 

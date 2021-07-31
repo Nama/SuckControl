@@ -111,8 +111,6 @@ class Config:
 
     def get_hardware_sensors(self):
         changed = False
-        # Needed for new plugged in hardware, but resets speed
-        #self.handle.Reset()
         for hw in self.handle.Hardware:
             hw.Update()
             for sensor in hw.Sensors:

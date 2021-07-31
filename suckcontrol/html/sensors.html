@@ -18,7 +18,7 @@
                     RPM
                     {% elif sensor.SensorType == 9 %}
                     <i class="material-icons">speed</i>
-                    <button onclick="stop_controls()" id="stop{{ sensor.Identifier|replace('/', '') }}" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                    <button onclick="stop_controls(this.id)" id="stop{{ sensor.Identifier|replace('/', '') }}" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
                         <i class="material-icons">slow_motion_video</i>
                     <span class="mdl-tooltip mdl-tooltip--top" data-mdl-for="stop{{ sensor.Identifier|replace('/', '') }}">
                         Stop manual controlling

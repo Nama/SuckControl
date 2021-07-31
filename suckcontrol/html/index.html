@@ -54,9 +54,7 @@
             let controls = response_data['controls']
             let idents = Object.keys(sensors)
             let sensor_count = document.querySelectorAll('.sensor-card').length;
-            console.log(sensor_count)
             if (idents.length !== sensor_count) {
-                console.log('refresh sensors')
                 await refresh('get_sensors', 'sensors')
             }
             else {
@@ -96,10 +94,12 @@
         xhr.send();
     }
 
-    function stop_controls() {
+    function stop_controls(id) {
+        let data = new FormData();
+        data.append('ident', id);
         let xhr = new XMLHttpRequest();
-        xhr.open('GET', '/stop_controls', true);
-        xhr.send();
+        xhr.open('POST', '/stop_controls', true);
+        xhr.send(data);
     }
 
     function setSlider(id, value) {

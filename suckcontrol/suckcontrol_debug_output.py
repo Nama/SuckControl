@@ -23,23 +23,22 @@ def initialize_lhm():
 
 
 def get_sensors(sensor):
-    if sensor.SensorType == 2:
+    if sensor.SensorType == 4:
         stype = ('Temp', '°C')
-    elif sensor.SensorType == 5:
-        stype = ('Fan', 'RPM')
     elif sensor.SensorType == 7:
+        stype = ('Fan', 'RPM')
+    elif sensor.SensorType == 9:
         stype = ('Cont', '%')
         try:
-            if sensor.Name == 'GPU Fan':
-                #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
-                sensor.Control.SetSoftware(100)
-                #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
-                sleep(20)
-                sensor.Control.SetDefault()
-                print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
+            #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
+            sensor.Control.SetSoftware(100)
+            #print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
+            sleep(2)
+            sensor.Control.SetDefault()
+            print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
         except:
             print('Couldn\'t control ' + sensor.Name)
-    if sensor.SensorType in (2, 5, 7):
+    if sensor.SensorType in (4, 7, 9):
         print(stype[0], sensor.Name, str(sensor.Value) + stype[1], sensor.Identifier)
 
 
