@@ -1,23 +1,36 @@
 import os
+import sys
 import webbrowser
 import logging
 import notify
-from waitress import serve
 from pathlib import Path
+from waitress import serve
 from configcontrol import Config
 from daemon import start_daemons
-from flask import Flask, render_template, request, redirect, url_for
 from infi.systray import SysTrayIcon
+from flask import Flask, render_template, request, redirect, url_for
+
+try:
+    loglevel = sys.argv[1]
+except IndexError:
+    loglevel = 'WARNING'
+numeric_level = getattr(logging, loglevel.upper(), None)
+if not isinstance(numeric_level, int):
+    raise ValueError('Invalid log level: %s' % loglevel)
+
+logger = logging.getLogger('suckcontrol')
+logger.setLevel(numeric_level)
+logfile = logging.FileHandler('suckcontrol.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s')
+logfile.setFormatter(formatter)
+logger.addHandler(logfile)
 
 config = Config()
 config_moved = config.load()
 start_daemons(config)
 
-logging.basicConfig(filename=str(Path(config.root_path, 'suckcontrol.log')), format='%(asctime)s %(levelname)s %(funcName)s %(lineno)d: %(message)s', level=logging.WARNING)
 folder = Path(config.root_path, 'html')
 app = Flask(__name__, static_folder=str(folder), template_folder=str(folder))
-flask_log = logging.getLogger('werkzeug')
-flask_log.setLevel(logging.WARNING)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
 
 

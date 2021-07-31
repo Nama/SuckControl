@@ -3,7 +3,7 @@ from time import sleep
 from numpy import interp
 from threading import Thread
 
-terminate = False
+logger = logging.getLogger('suckcontrol.daemon')
 
 
 def _control_speed(config, temp, controls, points):
@@ -11,14 +11,14 @@ def _control_speed(config, temp, controls, points):
     try:
         sensor_temp = sensors_all[temp]
     except KeyError:
-        logging.warning(f'{temp} doesn\'t exists.')
+        logger.warning(f'{temp} doesn\'t exists.')
         return
     sensor_controls = []
     for control in controls:
         try:
             sensor_controls.append(sensors_all[control])
         except KeyError:
-            logging.warning(f'{control} doesn\'t exists.')
+            logger.warning(f'{control} doesn\'t exists.')
             continue
     if not len(sensor_controls):
         # No sensors to control, abort
@@ -26,9 +26,9 @@ def _control_speed(config, temp, controls, points):
     to_set = None
     temp_value = int(sensor_temp.Value)
     control_value = int(sensor_controls[0].Value)
-    logging.debug(f'Fan: {sensor_controls[0].Name}')
+    logger.debug(f'Fan: {sensor_controls[0].Name}')
 
-    logging.debug(f'Temp: {temp_value}')
+    logger.debug(f'Temp: {temp_value}')
     if temp_value < points[0][0]:
         # Temp is below first point
         to_set = points[0][1]
@@ -40,7 +40,7 @@ def _control_speed(config, temp, controls, points):
                 to_set = point[1]
             else:
                 nextpoint = i + 1
-                logging.debug(f'{point}, {points[nextpoint]}')
+                logger.debug(f'{point}, {points[nextpoint]}')
                 point_next = points[nextpoint]
                 if temp_value in range(point[0], point_next[0]):
                     # Temp is between point[0] and point_next[0]
@@ -48,7 +48,7 @@ def _control_speed(config, temp, controls, points):
                     fp = [point[1], point_next[1]]
                     to_set = interp(temp_value, xp, fp)
                     break
-    logging.debug(f'Before change: {control_value} - After change: {to_set}')
+    logger.debug(f'Before change: {control_value} - After change: {to_set}')
     if control_value == to_set or to_set is None:
         # No need to set
         return
@@ -56,7 +56,7 @@ def _control_speed(config, temp, controls, points):
         try:
             control.Control.SetSoftware(to_set)
         except AttributeError:
-            logging.warning('Can\'t control this sensor: {control.Name} - {control.Identifier}')
+            logger.warning('Can\'t control this sensor: {control.Name} - {control.Identifier}')
             return
     return
 
@@ -85,4 +85,4 @@ def start_daemons(config):
     update_rules = Thread(target=_update_rules, args=(config,))
     update_rules.daemon = True
     update_rules.start()
-    logging.debug('daemon-thread started')
+    logger.debug('daemon-thread started')
