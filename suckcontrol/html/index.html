@@ -64,16 +64,19 @@
                     let target = document.getElementById(ident + 'value')
                     target.innerText = Math.ceil(sensors[idents[index]]).toString()
                     if (ident.includes('control')) {
-                        // Disable slider if sensor is in controls
                         let slider = document.getElementById(ident + 'slider')
                         if (slider.value !== sensors[idents[index]]) {
                             // Slider won't reset while moving it
                             slider.value = sensors[idents[index]]
                         }
+                        // Disable slider and button if sensor is in controls
+                        let button = document.getElementById('stop' + ident)
                         if (controls.includes(ident)) {
                             slider.disabled = true
+                            button.disabled = true
                         } else {
                             slider.disabled = false
+                            button.disabled = false
                         }
                     }
                 }
