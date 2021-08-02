@@ -1,10 +1,10 @@
 import clr
 import sys
 import logging
+from shutil import move
+from pathlib import Path
 from json import dump, load
 from json.decoder import JSONDecodeError
-from pathlib import Path
-from shutil import move
 
 logger = logging.getLogger('suckcontrol.config')
 
@@ -16,16 +16,18 @@ class Config:
         except AttributeError:
             self.root_path = Path.cwd()
         self.terminate = False
-        self.handle = self.initialize_lhm()
+        self.handle = self._initialize_lhm()
         self.path = 'config.json'
-        self.config = None
         self.sensors_all = {}
         self.sensors_control = {}
         self.sensors_fan = {}
         self.sensors_temp = {}
-
-    def set_name(self, ident, sensor):
-        pass
+        self.config = None
+        self.config_template = {
+            'main': {},
+            'devices': {},
+            'user': []
+        }
 
     def save(self):
         with open(self.path, 'w') as configfile:
@@ -40,6 +42,9 @@ class Config:
                 self.config = load(configfile)
                 logger.info('Config loaded')
                 configfile.close()
+                new_config = dict(self.config_template, **self.config)
+                self.config = new_config
+                self.save()
                 return moved
         except FileNotFoundError:
             logger.info('No config found.')
@@ -48,19 +53,19 @@ class Config:
             move(self.path, self.path + 'corrupt.json')
             moved = True
         self.config = None
-        self.init()
+        self._init()
         return moved
 
-    def init(self):
+    def _init(self):
         # Creating new config file
         logger.info('Creating new config')
-        self.config = {'main': {}, 'user': []}
+        self.config = self.config_template
         self.get_hardware_sensors()
         for sensor in self.sensors_all.items():
-            self.config['main'][sensor[0]] = sensor[1].Name
+            self.config['devices'][sensor[0]] = sensor[1].Name
         self.save()
 
-    def initialize_lhm(self):
+    def _initialize_lhm(self):
         lhm_file = str(Path(self.root_path, 'LibreHardwareMonitorLib.dll'))
         clr.AddReference(lhm_file)
         from LibreHardwareMonitor import Hardware
@@ -79,11 +84,11 @@ class Config:
             for shw in hw.SubHardware:
                 shw.Close()
 
-    def in_config(self, sensor, ident):
+    def _in_config(self, sensor, ident):
         saved = None
         changed = False
         try:
-            sensor.set_Name(self.config['main'][ident])
+            sensor.set_Name(self.config['devices'][ident])
             saved = True
         except KeyError:
             saved = False
@@ -92,12 +97,12 @@ class Config:
             pass
 
         if not saved:
-            self.config['main'][ident] = sensor.Name
+            self.config['devices'][ident] = sensor.Name
             changed = True
 
         return changed
 
-    def put_hardware_config(self, sensor):
+    def _put_hardware_config(self, sensor):
         ident = str(sensor.Identifier).replace('/', '')
         if sensor.SensorType == 4:
             self.sensors_temp[ident] = sensor
@@ -107,7 +112,7 @@ class Config:
             self.sensors_control[ident] = sensor
         self.sensors_all[ident] = sensor
 
-        changed = self.in_config(sensor, ident)
+        changed = self._in_config(sensor, ident)
         return changed
 
     def get_hardware_sensors(self):
@@ -116,7 +121,7 @@ class Config:
             hw.Update()
             for sensor in hw.Sensors:
                 if sensor.SensorType in (4, 7, 9):
-                    changed = self.put_hardware_config(sensor)
+                    changed = self._put_hardware_config(sensor)
                     if changed:
                         logger.info('Saving from get_hardware_sensors')
                         self.save()
@@ -124,7 +129,7 @@ class Config:
                 shw.Update()
                 for sensor in shw.Sensors:
                     if sensor.SensorType in (4, 7, 9):
-                        changed = self.put_hardware_config(sensor)
+                        changed = self._put_hardware_config(sensor)
                         if changed:
                             logger.info('Saving from get_hardware_sensors')
                             self.save()

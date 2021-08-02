@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, redirect, url_for
 try:
     loglevel = sys.argv[1]
 except IndexError:
-    loglevel = 'WARNING'
+    loglevel = 'INFO'
 numeric_level = getattr(logging, loglevel.upper(), None)
 if not isinstance(numeric_level, int):
     raise ValueError('Invalid log level: %s' % loglevel)
@@ -39,7 +39,7 @@ def index():
     # Get all the control sensors from config to disable slider
     controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
     controls = [value for values in controls for value in values]
-    return render_template('index.html', rules=config.config['user'], config=config.config['main'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
+    return render_template('index.html', rules=config.config['user'], config=config.config['devices'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
 
 
 @app.route('/add_rule')
@@ -70,7 +70,7 @@ def save_rule():
 
 @app.route('/get_rules')
 def get_rules():
-    return render_template('rules.html', rules=config.config['user'], config=config.config['main'])
+    return render_template('rules.html', rules=config.config['user'], config=config.config['devices'])
 
 
 @app.route('/get_sensors')
@@ -138,7 +138,7 @@ def stop_controls():
 def rename_sensor():
     ident = request.form['ident']
     new_name = request.form['name']
-    config.config['main'][ident] = new_name
+    config.config['devices'][ident] = new_name
     config.save()
     return '200'
 
