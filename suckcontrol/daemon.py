@@ -11,17 +11,19 @@ def _control_speed(config, temp, controls, points):
     try:
         sensor_temp = sensors_all[temp]
     except KeyError:
-        logger.warning(f'{temp} doesn\'t exists.')
+        # In case of removed hardware
+        logger.info(f'{temp} doesn\'t exists.')
         return
     sensor_controls = []
     for control in controls:
         try:
             sensor_controls.append(sensors_all[control])
         except KeyError:
-            logger.warning(f'{control} doesn\'t exists.')
+            # In case of removed hardware
+            logger.info(f'{control} doesn\'t exists.')
             continue
     if not len(sensor_controls):
-        # No sensors to control, abort
+        logger.info('No sensors to control, abort')
         return
     to_set = None
     temp_value = int(sensor_temp.Value)
@@ -56,6 +58,7 @@ def _control_speed(config, temp, controls, points):
         try:
             control.Control.SetSoftware(to_set)
         except AttributeError:
+            # This happened only on NVIDIA cards before NvApiWrapper was implemented in LHM
             logger.warning('Can\'t control this sensor: {control.Name} - {control.Identifier}')
             return
     return
@@ -85,4 +88,4 @@ def start_daemons(config):
     update_rules = Thread(target=_update_rules, args=(config,))
     update_rules.daemon = True
     update_rules.start()
-    logger.debug('daemon-thread started')
+    logger.info('daemon-thread started')

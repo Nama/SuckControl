@@ -30,7 +30,7 @@ class Config:
     def save(self):
         with open(self.path, 'w') as configfile:
             dump(self.config, configfile, sort_keys=True, indent=4)
-            logger.debug('Config saved.')
+            logger.info('Config saved.')
             configfile.close()
 
     def load(self):
@@ -38,13 +38,13 @@ class Config:
         try:
             with open(self.path, 'r') as configfile:
                 self.config = load(configfile)
-                logger.debug('Config loaded')
+                logger.info('Config loaded')
                 configfile.close()
                 return moved
         except FileNotFoundError:
-            logger.debug('No config found. Creating new one.')
+            logger.info('No config found.')
         except JSONDecodeError:
-            logger.warning('Corrupted config. Creating new one.')
+            logger.warning('Corrupted config.')
             move(self.path, self.path + 'corrupt.json')
             moved = True
         self.config = None
@@ -53,7 +53,7 @@ class Config:
 
     def init(self):
         # Creating new config file
-        logger.debug('Creating new config')
+        logger.info('Creating new config')
         self.config = {'main': {}, 'user': []}
         self.get_hardware_sensors()
         for sensor in self.sensors_all.items():
@@ -118,7 +118,7 @@ class Config:
                 if sensor.SensorType in (4, 7, 9):
                     changed = self.put_hardware_config(sensor)
                     if changed:
-                        logger.debug('Saving from get_hardware_sensors')
+                        logger.info('Saving from get_hardware_sensors')
                         self.save()
             for shw in hw.SubHardware:
                 shw.Update()
@@ -126,5 +126,5 @@ class Config:
                     if sensor.SensorType in (4, 7, 9):
                         changed = self.put_hardware_config(sensor)
                         if changed:
-                            logger.debug('Saving from get_hardware_sensors')
+                            logger.info('Saving from get_hardware_sensors')
                             self.save()
