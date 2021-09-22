@@ -48,7 +48,8 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 * Activate the switch in the menu under "Artemis" (only, if you use Artemis and have the plugin installed)
 
 ## Building
-* After cloning and checkout, `pip -r requirements.txt`
+* `pip install https://github.com/Nama/ArtemisRemoteControl/archive/refs/heads/main.zip`
+* `pip -r requirements.txt`
 * Get `LibreHardwareMonitorLib.dll` and `HidSharp.dll` from LibreHardwareMonitor
 * Get [NvAPIWrapper.dll](https://github.com/falahati/NvAPIWrapper/)
 * Get Material Design Lite from getmdl.io

@@ -4,4 +4,4 @@ Flask
 waitress
 winnotify
 infi.systray
-pythonnet
+ArtemisRemoteControl
