@@ -133,6 +133,16 @@
         xhr.send(data);
     }
 
+    function set_option(option, state) {
+        //const state = document.getElementById(element).checked;
+        let data = new FormData();
+        data.append('value', state)
+        data.append('option', option);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/set_option', true);
+        xhr.send(data);
+    }
+
     function rename(id) {
         document.getElementById('newname').value = '';
         document.getElementById('ident').innerText = 'Hardware Identifier: ' + id;

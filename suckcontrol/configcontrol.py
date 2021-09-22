@@ -5,6 +5,7 @@ from shutil import move
 from pathlib import Path
 from json import dump, load
 from json.decoder import JSONDecodeError
+from artemisremotecontrol import setleds
 
 logger = logging.getLogger('suckcontrol.config')
 
@@ -22,9 +23,12 @@ class Config:
         self.sensors_control = {}
         self.sensors_fan = {}
         self.sensors_temp = {}
+        self.artemis_counter = 0
         self.config = None
         self.config_template = {
-            'main': {},
+            'main': {
+                'artemis': False
+            },
             'devices': {},
             'user': []
         }
@@ -75,6 +79,8 @@ class Config:
         handle.IsGpuEnabled = True
         handle.IsCpuEnabled = True
         handle.IsStorageEnabled = True
+        handle.IsNetworkEnabled = True
+        handle.IsMemoryEnabled = True
         handle.Open()
         return handle
 
@@ -117,9 +123,17 @@ class Config:
 
     def get_hardware_sensors(self):
         changed = False
+        artemis_hardware = {}
+        artemis_network_index = 0
         for hw in self.handle.Hardware:
             hw.Update()
             for sensor in hw.Sensors:
+                if sensor.SensorType in (4, 5, 9, 14):
+                    if sensor.SensorType == 14:
+                        artemis_hardware[sensor.Name + str(artemis_network_index)] = sensor.Value
+                        artemis_network_index += 1
+                    else:
+                        artemis_hardware[sensor.Name] = sensor.Value
                 if sensor.SensorType in (4, 7, 9):
                     changed = self._put_hardware_config(sensor)
                     if changed:
@@ -128,8 +142,18 @@ class Config:
             for shw in hw.SubHardware:
                 shw.Update()
                 for sensor in shw.Sensors:
-                    if sensor.SensorType in (4, 7, 9):
+                    if sensor.SensorType in (4, 5, 9, 14):
+                        if sensor.SensorType == 14:
+                            artemis_hardware[sensor.Name + str(artemis_network_index)] = sensor.Value
+                            artemis_network_index += 1
+                        else:
+                            artemis_hardware[sensor.Name] = sensor.Value
+                    if sensor.SensorType in (4, 7, 9,):
                         changed = self._put_hardware_config(sensor)
                         if changed:
                             logger.info('Saving from get_hardware_sensors')
                             self.save()
+        if self.config['main']['artemis'] and self.artemis_counter == 1:
+            setleds('SuckControl', artemis_hardware)
+            self.artemis_counter = 0
+        self.artemis_counter += 1

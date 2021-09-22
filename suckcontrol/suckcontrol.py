@@ -39,7 +39,7 @@ def index():
     # Get all the control sensors from config to disable slider
     controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
     controls = [value for values in controls for value in values]
-    return render_template('index.html', rules=config.config['user'], config=config.config['devices'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
+    return render_template('index.html', rules=config.config['user'], config=config.config['devices'], main=config.config['main'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
 
 
 @app.route('/add_rule')
@@ -139,6 +139,19 @@ def rename_sensor():
     ident = request.form['ident']
     new_name = request.form['name']
     config.config['devices'][ident] = new_name
+    config.save()
+    return '200'
+
+
+@app.route('/set_option', methods=['POST'])
+def set_option():
+    option = request.form['option']
+    value = request.form['value']
+    if value == 'true':
+        to_set = True
+    else:
+        to_set = False
+    config.config['main'][option] = to_set
     config.save()
     return '200'
 

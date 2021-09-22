@@ -40,6 +40,13 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 * Rules show only one fan, not all associated with the rule
 * AMD Radeon 5000 and newer can't be controlled by LHM
 
+### Artemis
+* [Artemis](https://artemis-rgb.com/) is a unified RGB platform
+* SuckControl can send hardware monitoring data to Artemis, for RGB effects
+  * The [json plugin](https://github.com/Cheerpipe/Artemis.Plugins.Public/tree/master/src/Modules/Artemis.Plugins.Modules.Json) of @Cheepipe is required
+  * You can download it from the actions tab
+* Activate the switch in the menu under "Artemis" (only, if you use Artemis and have the plugin installed)
+
 ## Building
 * After cloning and checkout, `pip -r requirements.txt`
 * Get `LibreHardwareMonitorLib.dll` and `HidSharp.dll` from LibreHardwareMonitor

@@ -29,6 +29,11 @@
                     <a class="mdl-navigation__link" href="/">Home</a>
                     <a class="mdl-navigation__link" href="/add_rule">Add New Rule</a>
                     <a class="mdl-navigation__link" href="https://github.com/Nama/SuckControl/">Github</a>
+                    <a class="mdl-navigation__link" href="https://github.com/Nama/SuckControl/#artemis">Artemis</a>
+                    <label for="artemis" class="mdl-switch mdl-js-switch mdl-js-ripple-effect">
+                        <input onchange="set_option(this.id, this.checked)" type="checkbox" id="artemis" class="mdl-switch__input" {%- if main['artemis'] %} checked {%- endif %}>
+                        <span class="mdl-switch__label"></span>
+                    </label>
                 </nav>
             </div>
             <main class="mdl-layout__content">
