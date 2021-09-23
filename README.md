@@ -4,7 +4,7 @@
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
 Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it, to see what is possible with your hardware.
 
-![Gui of SuckControl](gui.jpg)
+![Gui of SuckControl](images/gui.jpg)
 
 ## Features
 * Define rules (curves) for every single fan with any temperature sensor
@@ -15,6 +15,7 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 * No need to restart after adding a new rule
 
 ## Usage
+* Read the more in depth [Wiki](https://github.com/Nama/SuckControl/wiki) for advanced usage
 * Run `SuckControl.exe`, a tray-icon appears, double-click it
   * Windows will complain about it, read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe)
 * You should *identify and* name all the sensors you want to use
