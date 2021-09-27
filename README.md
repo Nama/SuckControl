@@ -2,7 +2,7 @@
 ![Icon](suckcontrol/html/favicon.ico)
 ## Description
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
-Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it, to see what is possible with your hardware.
+Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it to see what is possible with your hardware.
 
 ![Gui of SuckControl](images/gui.jpg)
 
@@ -16,12 +16,12 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 
 ## Usage
 * Read the more in depth [Wiki](https://github.com/Nama/SuckControl/wiki) for advanced usage and fan/airflow setup guide
-* Run `SuckControl.exe`, a tray-icon appears, double-click it
-  * Windows will complain about it, read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe)
-* You should *identify and* name all the sensors you want to use
+* Run `SuckControl.exe` and double click the tray-icon that appears
+  * Read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe) about what to do if Windows complains
+* You should *identify* and *name* all the sensors you want to use
   * Click on the names to rename
-    * Avoid naming two sensors of the same type exactly the same
-    * [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) could help identify
+    * Avoid using the exact same name for two sensors of the same type
+    * [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) may help identify
 * Test the loudness and/or cooling of the fans with the sliders
   * Slider positions aren't saved
 * Click on the + Button to add a new rule
@@ -34,9 +34,8 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
   * Click on Save and go back to the main view
 
 ### Important Notes
-* You can make SuckControl autostart with the task scheduler of Windows.
-* Sliders of controls are disabled if the controls are in an enabled rule
-* Slider position/value isn't saved. That's only for testing purposes
+* You can make SuckControl autostart with the task scheduler of Windows
+* Sliders of the fans are disabled if the fans are in an active rule
 * Changes in the config.json are only active after a restart of SuckControl
 * Rules show only one fan, not all associated with the rule
 * AMD Radeon 5000 and newer can't be controlled by LHM
@@ -44,9 +43,9 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 ### Artemis
 * [Artemis](https://artemis-rgb.com/) is a unified RGB platform
 * SuckControl can send hardware monitoring data to Artemis, for RGB effects
-  * The [json plugin](https://github.com/Cheerpipe/Artemis.Plugins.Public/tree/master/src/Modules/Artemis.Plugins.Modules.Json) of @Cheepipe is required
+  * The [JSON plugin](https://github.com/Cheerpipe/Artemis.Plugins.Public/tree/master/src/Modules/Artemis.Plugins.Modules.Json) of @Cheepipe is required
   * You can download it from the actions tab
-* Activate the switch in the menu under "Artemis" (only, if you use Artemis and have the plugin installed)
+* Activate the switch in the menu under "Artemis" (if you use Artemis and have the plugin installed)
 
 ## Building
 * `pip install https://github.com/Nama/ArtemisRemoteControl/archive/refs/heads/main.zip`
