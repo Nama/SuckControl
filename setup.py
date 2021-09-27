@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='suckcontrol',
-    version='1.1',
+    version='1.1.1',
     packages=[
         'cli-ui',
         'numpy',

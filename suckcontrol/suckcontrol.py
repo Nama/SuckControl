@@ -47,7 +47,7 @@ def add_rule():
     # Get all the control sensors from config to hide them
     controls = [control['sensor_controls'] for control in config.config['user']]
     controls = [value for values in controls for value in values]
-    return render_template('add_rule.html', sensors_all=config.sensors_all, controls=controls)
+    return render_template('add_rule.html', sensors_all=config.sensors_all, controls=controls, main=config.config['main'])
 
 
 @app.route('/save_rule', methods=['POST'])
