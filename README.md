@@ -16,8 +16,11 @@ Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/Libre
 
 ## Usage
 * Read the more in depth [Wiki](https://github.com/Nama/SuckControl/wiki) for advanced usage and fan/airflow setup guide
-* Run `SuckControl.exe` and double click the tray-icon that appears
+* Download from [Releases](https://github.com/Nama/SuckControl/releases)
   * Read [here](https://stackoverflow.com/questions/54733909/windows-defender-alert-users-from-my-pyinstaller-exe) about what to do if Windows complains
+  * On the SmartScreen warning, click on "More information", then the "Run anyway" button appears
+  * On Edge, click on the 3 dots and choose to keep the file, then click on "More Information" and click on "keep" again
+* Run `SuckControl.exe` and double click the tray-icon that appears
 * You should *identify* and *name* all the sensors you want to use
   * Click on the names to rename
     * Avoid using the exact same name for two sensors of the same type
