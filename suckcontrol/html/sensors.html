@@ -8,7 +8,7 @@
                     <span id="{{ sensor.Identifier|replace('/', '') }}value">{{ sensor.Value|int }}</span>
                 </div>
                 <div class="mdl-card__actions mdl-card--border">
-                    {% if sensor.SensorType == 3 %}
+                    {% if sensor.SensorType == 4 %}
                     <i class="material-icons">device_thermostat</i>
                     <div class="mdl-layout-spacer"></div>
                     °C

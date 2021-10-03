@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='suckcontrol',
+    name='SuckControl',
     version='1.1.1',
     packages=[
         'cli-ui',
