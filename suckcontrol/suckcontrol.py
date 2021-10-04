@@ -28,7 +28,7 @@ config_moved = config.load()
 start_daemons(config)
 name = 'SuckControl'
 sg.theme('DarkGrey12')
-sleep(5)  # Wait till all the hardware is loaded
+sleep(7)  # Wait till all the hardware is loaded
 
 devices = config.config['devices']
 rules = [[]]
@@ -40,7 +40,7 @@ for rule in config.config['user']:
         sg.Frame(title, [
             [sg.Text(points)],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
-            sg.Button('Delete', key=f'btn_{key}_Delete')]
+             sg.Button('Delete', key=f'btn_{key}_Delete')]
         ],
                  key=key)
     )
@@ -57,10 +57,11 @@ for ident, sensor in config.sensors_all.items():
     title = sensor.Name
     value = int(sensor.Value)
     if sensor.SensorType == 9:
-        sensor_objects[ident] = sg.Slider(range=(0, 100), default_value=value, orientation='h', size=(20, 15), key=ident, enable_events=True)
+        sensor_objects[ident] = sg.Slider(range=(0, 100), default_value=value, orientation='h', size=(20, 15),
+                                          key=ident, enable_events=True)
         sensor_controllers.append(
-            [sg.Frame(title, [#[sg.Text(f'{value}%', size=(14, 2))],
-                              [sensor_objects[ident]]])]
+            [sg.Frame(title, [  # [sg.Text(f'{value}%', size=(14, 2))],
+                [sensor_objects[ident]]])]
         )
     elif sensor.SensorType == 7:
         sensor_objects[ident] = sg.Text(f'{value} RPM', size=(14, 2), key=ident)
@@ -73,19 +74,22 @@ for ident, sensor in config.sensors_all.items():
             [sg.Frame(title, [[sensor_objects[ident]]])]
         )
 
-layout = [[sg.Frame('Rules', rules)],
+menu = [[name, ['GitHub', 'Exit', ]],
+        ['How to', [name, 'Airflow']], ]
+
+layout = [[sg.Menu(menu), sg.Frame('Rules', rules)],
           [sg.Column([[sg.Frame('Controllers', sensor_controllers)]]),
            sg.Column([[sg.Frame('Fans', sensor_fans)]]),
            sg.Column([[sg.Frame('Temperatures', sensor_temps)]])],
           [sg.Button('Add Rule', key='btn_AddRule')]]
 
-menu = ['BLANK', ['&Open', '&Save', ['1', '2', ['a', 'b']], '!&Properties', 'E&xit']]
-window = sg.Window(name, layout, menu=menu, finalize=True, alpha_channel=0, enable_close_attempted_event=True, location=sg.user_settings_get_entry('-location-', (None, None)))
+window = sg.Window(name, layout, finalize=True, alpha_channel=0, enable_close_attempted_event=True, icon='icon.ico',
+                   location=sg.user_settings_get_entry('-location-', (None, None)))
 window.hide()
 window_hidden = True
 
 tray_menu = ['', ['Open', 'Exit']]
-tray = SystemTray(tray_menu, single_click_events=True, window=window, tooltip=name, icon=r'icon_tray.png')
+tray = SystemTray(tray_menu, single_click_events=True, window=window, tooltip=name, icon=r'icon.ico')
 while True:
     event, values = window.read(timeout=1500)
     if event == tray.key:
@@ -141,5 +145,6 @@ while True:
 
 config.terminate = True
 config.stop()
+sleep(1)  # Wait for clean exit
 tray.close()
 window.close()
