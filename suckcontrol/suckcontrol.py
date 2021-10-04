@@ -1,6 +1,3 @@
-# https://github.com/PySimpleGUI/PySimpleGUI/issues/3881
-# https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_Layout_Extend.py
-
 import os
 import sys
 import logging
@@ -31,19 +28,19 @@ config_moved = config.load()
 start_daemons(config)
 name = 'SuckControl'
 sg.theme('DarkGrey12')
-sleep(5)
+sleep(5)  # Wait till all the hardware is loaded
 
 devices = config.config['devices']
 rules = [[]]
 for rule in config.config['user']:
     title = f'{devices[rule["sensor_temp"]]} & {devices[rule["sensor_controls"][0]]}'
     points = rule['points']
-    key = f'{rule["sensor_temp"]}{rule["sensor_controls"][0]}'
+    key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
     rules[-1].append(
         sg.Frame(title, [
             [sg.Text(points)],
-            [sg.Button('Edit', key=f'{key}Edit'),
-            sg.Button('Delete', key=f'{key}Delete')]
+            [sg.Button('Edit', key=f'btn_{key}_Edit'),
+            sg.Button('Delete', key=f'btn_{key}_Delete')]
         ],
                  key=key)
     )
@@ -87,7 +84,7 @@ window.hide()
 window_hidden = True
 
 menu = ['', ['Open', 'Exit']]
-tray = SystemTray(menu, single_click_events=True, window=window, tooltip=name, icon=r'suckcontrol.png')
+tray = SystemTray(menu, single_click_events=True, window=window, tooltip=name, icon=r'icon_tray.png')
 while True:
     event, values = window.read(timeout=1500)
     if event == tray.key:
@@ -111,8 +108,23 @@ while True:
     # Only if window is shown
     if window_hidden:
         continue
-    if event == 'btn_AddRule':
-        sensor_objects['Yorp'].update('9999')
+    if event.startswith('btn_'):
+        event_data = event.split('_')
+        if event_data[-1] == 'AddRule':
+            # TODO: https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_Layout_Extend.py
+            pass
+        elif event_data[-1] == 'Delete':
+            first_controller = event_data[2]
+            for i, rule in enumerate(config.config['user']):
+                if rule['sensor_controls'][0] == first_controller:
+                    config.config['user'].pop(i)
+                    config.save()
+                    rule_element = window.find_element(f'{event_data[1]}_{event_data[2]}')
+                    rule_element.update(visible=False)
+                    break
+        elif event_data[-1] == 'Edit':
+            pass
+
 
     for ident, sensor in config.sensors_all.items():
         # Prevent the event loop setting the sliders while the user moves them
