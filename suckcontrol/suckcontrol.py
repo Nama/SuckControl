@@ -35,13 +35,16 @@ for rule in config.config['user']:
     title = f'{devices[rule["sensor_temp"]]} & {devices[rule["sensor_controls"][0]]}'
     points = rule['points']
     key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
+    tooltip = ''
+    tooltip += ''.join([f'{devices[control]}\n' for control in rule["sensor_controls"]])
     rules[-1].append(
         sg.Frame(title, [
             [sg.Text(points)],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
              sg.Button('Delete', key=f'btn_{key}_Delete')]
         ],
-                 key=key)
+                 key=key,
+                 tooltip=tooltip)
     )
 
     # New row
@@ -79,7 +82,7 @@ def open_url(url):
     b.open(url)
 
 
-menu = [[name, ['GitHub::mn_github', 'Exit', ]],
+menu = [[name, ['GitHub::mn_github', '!Reload Hardware', 'Exit', ]],
         ['How to', [f'{name}::mn_ht_{name}', 'Airflow::mn_ht_airflow']], ]
 
 layout = [[sg.Menu(menu), sg.Frame('Rules', rules)],
@@ -117,7 +120,7 @@ while True:
     elif event in (sg.WIN_CLOSED, 'Exit'):  # Triggered via tray and menu
         break
 
-    # Only if window is shown
+    # Proceed only if window is shown
     if window_hidden:
         continue
 
