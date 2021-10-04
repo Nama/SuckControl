@@ -1,14 +1,15 @@
+# https://github.com/PySimpleGUI/PySimpleGUI/issues/3881
+# https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_Layout_Extend.py
+
 import os
 import sys
-import webbrowser
 import logging
-import notify
+from time import sleep
+import PySimpleGUI as sg
+from psgtray import SystemTray
 from pathlib import Path
-from waitress import serve
 from configcontrol import Config
 from daemon import start_daemons
-from infi.systray import SysTrayIcon
-from flask import Flask, render_template, request, redirect, url_for
 
 try:
     loglevel = sys.argv[1]
@@ -28,157 +29,103 @@ logger.addHandler(logfile)
 config = Config()
 config_moved = config.load()
 start_daemons(config)
+name = 'SuckControl'
+sg.theme('DarkGrey12')
+sleep(5)
 
-folder = Path(config.root_path, 'html')
-app = Flask(__name__, static_folder=str(folder), template_folder=str(folder))
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
+devices = config.config['devices']
+rules = [[]]
+for rule in config.config['user']:
+    title = f'{devices[rule["sensor_temp"]]} & {devices[rule["sensor_controls"][0]]}'
+    points = rule['points']
+    key = f'{rule["sensor_temp"]}{rule["sensor_controls"][0]}'
+    rules[-1].append(
+        sg.Frame(title, [
+            [sg.Text(points)],
+            [sg.Button('Edit', key=f'{key}Edit'),
+            sg.Button('Delete', key=f'{key}Delete')]
+        ],
+                 key=key)
+    )
 
+    # New row
+    if len(rules[-1]) == 5:
+        rules.append([])
 
-@app.route('/')
-def index():
-    # Get all the control sensors from config to disable slider
-    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
-    controls = [value for values in controls for value in values]
-    return render_template('index.html', rules=config.config['user'], config=config.config['devices'], main=config.config['main'], sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
+sensor_objects = {}
+sensor_controllers = [[]]
+sensor_fans = [[]]
+sensor_temps = [[]]
+for ident, sensor in config.sensors_all.items():
+    title = sensor.Name
+    value = int(sensor.Value)
+    if sensor.SensorType == 9:
+        sensor_objects[ident] = sg.Slider(range=(0, 100), default_value=value, orientation='h', size=(20, 15), key=ident, enable_events=True)
+        sensor_controllers.append(
+            [sg.Frame(title, [#[sg.Text(f'{value}%', size=(14, 2))],
+                              [sensor_objects[ident]]])]
+        )
+    elif sensor.SensorType == 7:
+        sensor_objects[ident] = sg.Text(f'{value} RPM', size=(14, 2), key=ident)
+        sensor_fans.append(
+            [sg.Frame(title, [[sensor_objects[ident]]])]
+        )
+    elif sensor.SensorType == 4:
+        sensor_objects[ident] = sg.Text(f'{value} °C', size=(14, 2), key=ident)
+        sensor_temps.append(
+            [sg.Frame(title, [[sensor_objects[ident]]])]
+        )
 
+layout = [[sg.Frame('Rules', rules)],
+          [sg.Column([[sg.Frame('Controllers', sensor_controllers)]]),
+           sg.Column([[sg.Frame('Fans', sensor_fans)]]),
+           sg.Column([[sg.Frame('Temperatures', sensor_temps)]])],
+          [sg.Button('Add Rule', key='btn_AddRule')]]
 
-@app.route('/add_rule')
-def add_rule():
-    # Get all the control sensors from config to hide them
-    controls = [control['sensor_controls'] for control in config.config['user']]
-    controls = [value for values in controls for value in values]
-    return render_template('add_rule.html', sensors_all=config.sensors_all, controls=controls, main=config.config['main'])
+window = sg.Window(name, layout, finalize=True, alpha_channel=0, enable_close_attempted_event=True)
+window.hide()
+window_hidden = True
 
+menu = ['', ['Open', 'Exit']]
+tray = SystemTray(menu, single_click_events=True, window=window, tooltip=name, icon=r'suckcontrol.png')
+while True:
+    event, values = window.read(timeout=1500)
+    if event == tray.key:
+        event = values[event]
 
-@app.route('/save_rule', methods=['POST'])
-def save_rule():
-    data = request.json
-    tempsensor = data['temp']
-    controlsensors = data['controls']
-    tempvalues = data['tempvalues']
-    controlvalues = data['controlvalues']
-    values = zip(tempvalues, controlvalues)
-    config.config['user'].append({
-        'enabled': True,
-        'sensor_temp': tempsensor,
-        'sensor_controls': controlsensors,
-        'points': list(values)
-    })
-    config.save()
-    return redirect(url_for('index'))
+    # Tray actions
+    if event in ('Open', sg.EVENT_SYSTEM_TRAY_ICON_ACTIVATED):  # Single click
+        if window_hidden:
+            window.set_alpha(1)
+            window.un_hide()
+            window_hidden = False
+        elif not window_hidden:
+            window.hide()
+            window_hidden = True
+    elif event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
+        window.hide()
+        window_hidden = True
+    elif event in (sg.WIN_CLOSED, 'Exit'):
+        break
 
+    # Only if window is shown
+    if window_hidden:
+        continue
+    if event == 'btn_AddRule':
+        sensor_objects['Yorp'].update('9999')
 
-@app.route('/get_rules')
-def get_rules():
-    return render_template('rules.html', rules=config.config['user'], config=config.config['devices'])
+    for ident, sensor in config.sensors_all.items():
+        # Prevent the event loop setting the sliders while the user moves them
+        if sensor.SensorType == 9 and 'control' not in event:
+            value = int(sensor.Value)
+        elif sensor.SensorType == 7:
+            value = str(f'{int(sensor.Value)} RPM')
+        elif sensor.SensorType == 4:
+            value = str(f'{int(sensor.Value)} °C')
+        sensor_objects[ident].update(value)
+    window.refresh()
 
-
-@app.route('/get_sensors')
-def get_temps():
-    # Get all the control sensors from config to disable slider
-    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
-    controls = [value for values in controls for value in values]
-    return render_template('sensors.html', sensors_list=(config.sensors_control, config.sensors_fan, config.sensors_temp), controls=controls)
-
-
-@app.route('/get_sensor_values')
-def get_sensor_values():
-    sensors_list = {}
-    sensors = {**config.sensors_control, **config.sensors_fan, **config.sensors_temp}
-    for ident, sensor in sensors.items():
-        sensors_list[ident] = sensor.Value
-    # Get all the control sensors from config to disable slider
-    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
-    controls = [value for values in controls for value in values]
-    data = {'sensors': sensors_list, 'controls': controls}
-    return data
-
-
-@app.route('/set_controls', methods=['POST'])
-def set_controls():
-    ident = request.form['ident']
-    speed = int(request.form['speed'])
-    ident = ident.replace('slider', '')
-    config.sensors_control[ident].Control.SetSoftware(speed)
-    return str(speed)
-
-
-@app.route('/delete_rule', methods=['POST'])
-def delete_rule():
-    index = int(request.form['delete'])
-    set_default(index)
-    config.config['user'].pop(index)
-    config.save()
-    return '200'
-
-
-@app.route('/toggle_rule', methods=['POST'])
-def disable_rule():
-    index = int(request.form['toggle'])
-    to_set = request.form['enable']
-    if to_set == 'true':
-        to_set = True
-    else:
-        to_set = False
-    config.config['user'][index]['enabled'] = to_set
-    config.save()
-    set_default(index)
-    return '200'
-
-
-@app.route('/stop_controls', methods=['POST'])
-def stop_controls():
-    ident = request.form['ident']
-    ident = ident.replace('stop', '')
-    config.sensors_control[ident].Control.SetDefault()
-    return '200'
-
-
-@app.route('/rename_sensor', methods=['POST'])
-def rename_sensor():
-    ident = request.form['ident']
-    new_name = request.form['name']
-    config.config['devices'][ident] = new_name
-    config.save()
-    return '200'
-
-
-@app.route('/set_option', methods=['POST'])
-def set_option():
-    option = request.form['option']
-    value = request.form['value']
-    if value == 'true':
-        to_set = True
-    else:
-        to_set = False
-    config.config['main'][option] = to_set
-    config.save()
-    return '200'
-
-
-def set_default(index):
-    for ident in config.config['user'][index]['sensor_controls']:
-        config.sensors_control[ident].Control.SetDefault()
-
-
-def close(systray):
-    config.terminate = True
-    config.stop()
-    os._exit(0)  # Needed, so flask exits -.-
-
-
-def open_browser(systray):
-    b = webbrowser.get('windows-default')
-    b.open('http://localhost:9876')
-
-
-if config_moved:
-    notify.init(str(Path.joinpath(folder, 'favicon.ico')), open_browser(None))
-    notify.notify('Your config file was broken. I renamed it to config.jsoncorrupt.json!',
-                  'SuckControl', str(Path.joinpath(folder, 'favicon.ico')), False, 10,
-                  notify.dwInfoFlags.NIIF_USER | notify.dwInfoFlags.NIIF_LARGE_ICON)
-    notify.uninit()
-menu_options = (('Open', None, open_browser),)
-systray = SysTrayIcon(str(Path.joinpath(folder, 'favicon.ico')), 'SuckControl', menu_options, on_quit=close)
-systray.start()
-serve(app, port=9876)
+config.terminate = True
+config.stop()
+tray.close()
+window.close()
