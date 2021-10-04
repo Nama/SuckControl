@@ -29,19 +29,39 @@ name = 'SuckControl'
 sg.theme('DarkGrey12')
 sleep(7)  # Wait till all the hardware is loaded
 
+
+def get_active_controls():
+    # Get all the control sensors from config to disable slider
+    controls = [control['sensor_controls'] for control in config.config['user'] if control['enabled']]
+    controls = [value for values in controls for value in values]
+    return controls
+
+
+def set_default(index):
+    for ident in config.config['user'][index]['sensor_controls']:
+        config.sensors_control[ident].Control.SetDefault()
+
+
+def open_url(url):
+    b = webbrowser.get('windows-default')
+    b.open(url)
+
+
 devices = config.config['devices']
 rules = [[]]
 for rule in config.config['user']:
     title = f'{devices[rule["sensor_temp"]]} & {devices[rule["sensor_controls"][0]]}'
     points = rule['points']
+    enabled = rule['enabled']
     key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
     tooltip = ''
-    tooltip += ''.join([f'{devices[control]}\n' for control in rule["sensor_controls"]])
+    tooltip += '\n'.join([f'{devices[control]}' for control in rule["sensor_controls"]])
     rules[-1].append(
         sg.Frame(title, [
             [sg.Text(points)],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
-             sg.Button('Delete', key=f'btn_{key}_Delete')]
+             sg.Button('Delete', key=f'btn_{key}_Delete'),
+             sg.Checkbox('Enabled', default=enabled, key=f'chk_{key}_enabled', enable_events=True)]
         ],
                  key=key,
                  tooltip=tooltip)
@@ -51,6 +71,7 @@ for rule in config.config['user']:
     if len(rules[-1]) == 5:
         rules.append([])
 
+controls = get_active_controls()
 sensor_objects = {}
 sensor_controllers = [[]]
 sensor_fans = [[]]
@@ -59,11 +80,15 @@ for ident, sensor in config.sensors_all.items():
     title = sensor.Name
     value = int(sensor.Value)
     if sensor.SensorType == 9:
+        if ident in controls:
+            disabled = True
+        else:
+            disabled = False
         sensor_objects[ident] = sg.Slider(range=(0, 100), default_value=value, orientation='h', size=(20, 15),
-                                          key=ident, enable_events=True)
+                                          key=f'sld_{ident}', enable_events=True, disabled=disabled)
         sensor_controllers.append(
             [sg.Frame(title, [  # [sg.Text(f'{value}%', size=(14, 2))],
-                [sensor_objects[ident]]])]
+                [sensor_objects[ident], sg.Button('Reset', key=f'btn_{ident}_Reset', disabled=disabled)]])]
         )
     elif sensor.SensorType == 7:
         sensor_objects[ident] = sg.Text(f'{value} RPM', size=(14, 2), key=ident)
@@ -75,12 +100,6 @@ for ident, sensor in config.sensors_all.items():
         sensor_temps.append(
             [sg.Frame(title, [[sensor_objects[ident]]])]
         )
-
-
-def open_url(url):
-    b = webbrowser.get('windows-default')
-    b.open(url)
-
 
 menu = [[name, ['GitHub::mn_github', '!Reload Hardware', 'Exit', ]],
         ['How to', [f'{name}::mn_ht_{name}', 'Airflow::mn_ht_airflow']], ]
@@ -146,13 +165,34 @@ while True:
             first_controller = event_data[2]
             for i, rule in enumerate(config.config['user']):
                 if rule['sensor_controls'][0] == first_controller:
+                    set_default(i)
                     config.config['user'].pop(i)
                     config.save()
                     rule_element = window.find_element(f'{event_data[1]}_{event_data[2]}')
                     rule_element.update(visible=False)
+                    for ident in rule['sensor_controls']:
+                        sensor_objects[ident].update(disabled=False)
+                        window.find_element(f'btn_{ident}_Reset').update(disabled=False)
                     break
         elif event_data[-1] == 'Edit':
             pass
+        elif event_data[-1] == 'Reset':
+            config.sensors_control[event_data[1]].Control.SetDefault()
+    elif event_data[0] == 'sld':
+        if 'control' in event_data[1]:
+            config.sensors_control[event_data[1]].Control.SetSoftware(values[event])
+    elif event_data[0] == 'chk':
+        if event_data[-1] == 'enabled':
+            first_controller = event_data[2]
+            for i, rule in enumerate(config.config['user']):
+                if rule['sensor_controls'][0] == first_controller:
+                    enabled = not config.config['user'][i]['enabled']
+                    config.config['user'][i]['enabled'] = enabled
+                    config.save()
+                    set_default(i)
+                    for ident in rule['sensor_controls']:
+                        sensor_objects[ident].update(disabled=enabled)
+                        window.find_element(f'btn_{ident}_Reset').update(disabled=enabled)
     # Check for menu clicks
     elif event_data[0] == 'mn':
         if event_data[1] == 'github':
