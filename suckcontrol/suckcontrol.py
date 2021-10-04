@@ -1,10 +1,9 @@
-import os
 import sys
 import logging
+import webbrowser
 from time import sleep
 import PySimpleGUI as sg
 from psgtray import SystemTray
-from pathlib import Path
 from configcontrol import Config
 from daemon import start_daemons
 
@@ -74,8 +73,14 @@ for ident, sensor in config.sensors_all.items():
             [sg.Frame(title, [[sensor_objects[ident]]])]
         )
 
-menu = [[name, ['GitHub', 'Exit', ]],
-        ['How to', [name, 'Airflow']], ]
+
+def open_url(url):
+    b = webbrowser.get('windows-default')
+    b.open(url)
+
+
+menu = [[name, ['GitHub::mn_github', 'Exit', ]],
+        ['How to', [f'{name}::mn_ht_{name}', 'Airflow::mn_ht_airflow']], ]
 
 layout = [[sg.Menu(menu), sg.Frame('Rules', rules)],
           [sg.Column([[sg.Frame('Controllers', sensor_controllers)]]),
@@ -109,14 +114,28 @@ while True:
         sg.user_settings_set_entry('-location-', window.current_location())
         window.hide()
         window_hidden = True
-    elif event in (sg.WIN_CLOSED, 'Exit'):
+    elif event in (sg.WIN_CLOSED, 'Exit'):  # Triggered via tray and menu
         break
 
     # Only if window is shown
     if window_hidden:
         continue
-    if event.startswith('btn_'):
-        event_data = event.split('_')
+
+    # Update values in window
+    for ident, sensor in config.sensors_all.items():
+        # Prevent the event loop setting the sliders while the user moves them
+        if sensor.SensorType == 9 and 'control' not in event:
+            value = int(sensor.Value)
+        elif sensor.SensorType == 7:
+            value = str(f'{int(sensor.Value)} RPM')
+        elif sensor.SensorType == 4:
+            value = str(f'{int(sensor.Value)} °C')
+        sensor_objects[ident].update(value)
+    window.refresh()
+
+    event_data = event.split('::')[-1].split('_')
+    # Check for button clicks
+    if event_data[0] == 'btn':
         if event_data[-1] == 'AddRule':
             # TODO: https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_Layout_Extend.py
             pass
@@ -131,17 +150,15 @@ while True:
                     break
         elif event_data[-1] == 'Edit':
             pass
-
-    for ident, sensor in config.sensors_all.items():
-        # Prevent the event loop setting the sliders while the user moves them
-        if sensor.SensorType == 9 and 'control' not in event:
-            value = int(sensor.Value)
-        elif sensor.SensorType == 7:
-            value = str(f'{int(sensor.Value)} RPM')
-        elif sensor.SensorType == 4:
-            value = str(f'{int(sensor.Value)} °C')
-        sensor_objects[ident].update(value)
-    window.refresh()
+    # Check for menu clicks
+    elif event_data[0] == 'mn':
+        if event_data[1] == 'github':
+            open_url('https://github.com/Nama/SuckControl/')
+        elif event_data[1] == 'ht':
+            if event_data[2] == name:
+                open_url('https://github.com/Nama/SuckControl/wiki/How-to-use')
+            elif event_data[2] == 'airflow':
+                open_url('https://github.com/Nama/SuckControl/wiki/How-to-airflow')
 
 config.terminate = True
 config.stop()
