@@ -79,12 +79,13 @@ layout = [[sg.Frame('Rules', rules)],
            sg.Column([[sg.Frame('Temperatures', sensor_temps)]])],
           [sg.Button('Add Rule', key='btn_AddRule')]]
 
-window = sg.Window(name, layout, finalize=True, alpha_channel=0, enable_close_attempted_event=True)
+menu = ['BLANK', ['&Open', '&Save', ['1', '2', ['a', 'b']], '!&Properties', 'E&xit']]
+window = sg.Window(name, layout, menu=menu, finalize=True, alpha_channel=0, enable_close_attempted_event=True, location=sg.user_settings_get_entry('-location-', (None, None)))
 window.hide()
 window_hidden = True
 
-menu = ['', ['Open', 'Exit']]
-tray = SystemTray(menu, single_click_events=True, window=window, tooltip=name, icon=r'icon_tray.png')
+tray_menu = ['', ['Open', 'Exit']]
+tray = SystemTray(tray_menu, single_click_events=True, window=window, tooltip=name, icon=r'icon_tray.png')
 while True:
     event, values = window.read(timeout=1500)
     if event == tray.key:
@@ -97,9 +98,11 @@ while True:
             window.un_hide()
             window_hidden = False
         elif not window_hidden:
+            sg.user_settings_set_entry('-location-', window.current_location())
             window.hide()
             window_hidden = True
     elif event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
+        sg.user_settings_set_entry('-location-', window.current_location())
         window.hide()
         window_hidden = True
     elif event in (sg.WIN_CLOSED, 'Exit'):
@@ -124,7 +127,6 @@ while True:
                     break
         elif event_data[-1] == 'Edit':
             pass
-
 
     for ident, sensor in config.sensors_all.items():
         # Prevent the event loop setting the sliders while the user moves them
