@@ -1,7 +1,5 @@
 numpy
 setuptools
-Flask
-waitress
-winnotify
-infi.systray
+PySimpleGUI
+psgtray
 ArtemisRemoteControl
