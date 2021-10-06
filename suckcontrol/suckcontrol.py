@@ -58,7 +58,8 @@ for rule in config.config['user']:
     tooltip += '\n'.join([f'{devices[control]}' for control in rule["sensor_controls"]])
     rules[-1].append(
         sg.Frame(title, [
-            [sg.Text(points)],
+            #[sg.Text(points)],
+            [sg.Graph(canvas_size=(400, 400), graph_bottom_left=(0, 0), graph_top_right=(200, 200), background_color='grey', key=f'graph_{key}')],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
              sg.Button('Delete', key=f'btn_{key}_Delete'),
              sg.Checkbox('Enabled', default=enabled, key=f'chk_{key}_enabled', enable_events=True)]
@@ -82,10 +83,12 @@ for ident, sensor in config.sensors_all.items():
     if sensor.SensorType == 9:
         if ident in controls:
             disabled = True
+            color = 'grey'
         else:
             disabled = False
+            color = sg.theme_slider_color()
         sensor_objects[ident] = sg.Slider(range=(0, 100), default_value=value, orientation='h', size=(20, 15),
-                                          key=f'sld_{ident}', enable_events=True, disabled=disabled)
+                                          key=f'sld_{ident}', enable_events=True, disabled=disabled, trough_color=color)
         sensor_controllers.append(
             [sg.Frame(title, [  # [sg.Text(f'{value}%', size=(14, 2))],
                 [sensor_objects[ident], sg.Button('Reset', key=f'btn_{ident}_Reset', disabled=disabled)]])]
@@ -172,6 +175,7 @@ while True:
                     rule_element.update(visible=False)
                     for ident in rule['sensor_controls']:
                         sensor_objects[ident].update(disabled=False)
+                        sensor_objects[ident].Widget.config(troughcolor=sg.theme_slider_color())
                         window.find_element(f'btn_{ident}_Reset').update(disabled=False)
                     break
         elif event_data[-1] == 'Edit':
@@ -190,8 +194,13 @@ while True:
                     config.config['user'][i]['enabled'] = enabled
                     config.save()
                     set_default(i)
+                    if enabled:
+                        color = 'grey'
+                    else:
+                        color = sg.theme_slider_color()
                     for ident in rule['sensor_controls']:
                         sensor_objects[ident].update(disabled=enabled)
+                        sensor_objects[ident].Widget.config(troughcolor=color)
                         window.find_element(f'btn_{ident}_Reset').update(disabled=enabled)
     # Check for menu clicks
     elif event_data[0] == 'mn':
