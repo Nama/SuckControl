@@ -56,10 +56,11 @@ for rule in config.config['user']:
     key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
     tooltip = ''
     tooltip += '\n'.join([f'{devices[control]}' for control in rule["sensor_controls"]])
+    start_point = (points[0][0] - 5, points[0][1] - 5)
+    end_point = (points[-1][0] + 5, points[-1][1] + 5)
     rules[-1].append(
         sg.Frame(title, [
-            #[sg.Text(points)],
-            [sg.Graph(canvas_size=(400, 400), graph_bottom_left=(0, 0), graph_top_right=(200, 200), background_color='grey', key=f'graph_{key}')],
+            [sg.Graph(canvas_size=(200, 200), graph_bottom_left=start_point, graph_top_right=end_point, background_color='grey', key=f'graph_{key}')],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
              sg.Button('Delete', key=f'btn_{key}_Delete'),
              sg.Checkbox('Enabled', default=enabled, key=f'chk_{key}_enabled', enable_events=True)]
@@ -146,18 +147,6 @@ while True:
     if window_hidden:
         continue
 
-    # Update values in window
-    for ident, sensor in config.sensors_all.items():
-        # Prevent the event loop setting the sliders while the user moves them
-        if sensor.SensorType == 9 and 'control' not in event:
-            value = int(sensor.Value)
-        elif sensor.SensorType == 7:
-            value = str(f'{int(sensor.Value)} RPM')
-        elif sensor.SensorType == 4:
-            value = str(f'{int(sensor.Value)} °C')
-        sensor_objects[ident].update(value)
-    window.refresh()
-
     event_data = event.split('::')[-1].split('_')
     # Check for button clicks
     if event_data[0] == 'btn':
@@ -211,6 +200,56 @@ while True:
                 open_url('https://github.com/Nama/SuckControl/wiki/How-to-use')
             elif event_data[2] == 'airflow':
                 open_url('https://github.com/Nama/SuckControl/wiki/How-to-airflow')
+
+    # Update values in window
+    for ident, sensor in config.sensors_all.items():
+        # Prevent the event loop setting the sliders while the user moves them
+        if sensor.SensorType == 9 and 'control' not in event:
+            value = int(sensor.Value)
+        elif sensor.SensorType == 7:
+            value = str(f'{int(sensor.Value)} RPM')
+        elif sensor.SensorType == 4:
+            value = str(f'{int(sensor.Value)} °C')
+        sensor_objects[ident].update(value)
+    window.refresh()
+
+    # Update graphs of rules
+    for rule in config.config['user']:
+        points = rule['points']
+        key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
+        graph = window.find_element(f'graph_{key}')
+        graph.erase()
+        size = 1
+        relative_size = (1 / 100) * max(points[-1])
+
+        # Draw axis
+        canvas_size = graph.CanvasSize
+        start_point = (points[0][0] - 5, points[0][1] - 5)
+        end_point = (points[-1][0] + 5, points[-1][1] + 5)
+        #graph.DrawLine((-5, start_point[1] + 3), (canvas_size[0], start_point[1] + 3))
+        #graph.DrawLine((start_point[0] + 3, -5), (start_point[0] + 3, canvas_size[0]))
+
+        for i, point in enumerate(points):
+            graph.draw_point(point, color='red', size=relative_size)
+            graph.draw_text(point, point)
+            if point != points[-1]:
+                graph.draw_line(point, points[i+1], color='red')
+        # Line should be extended to the borders of the graphs
+        graph.draw_line((-5, points[0][1]), points[0], color='red')
+        graph.draw_line(points[-1], (100, points[-1][1]), color='red')
+
+        ident_control = rule['sensor_controls'][0]
+        speed = int(config.sensors_control[ident_control].Value)
+        ident_temp = rule['sensor_temp']
+        temp = int(config.sensors_temp[ident_temp].Value)
+        current_point = [temp, speed]
+        if temp < start_point[0] or speed < start_point[1]:
+            current_point_location = [start_point[0], speed]
+        else:
+            current_point_location = current_point
+        graph.draw_point(current_point_location, color='green', size=relative_size + 0.5)
+        current_point_text = [current_point_location[0] + 4, current_point_location[1] + 4]
+        graph.draw_text(current_point, current_point_text, color='green')
 
 config.terminate = True
 config.stop()
