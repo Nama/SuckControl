@@ -60,7 +60,7 @@ for rule in config.config['user']:
     end_point = (points[-1][0] + 5, points[-1][1] + 5)
     rules[-1].append(
         sg.Frame(title, [
-            [sg.Graph(canvas_size=(200, 200), graph_bottom_left=start_point, graph_top_right=end_point, background_color='grey', key=f'graph_{key}')],
+            [sg.Graph(canvas_size=(200, 200), graph_bottom_left=start_point, graph_top_right=end_point, background_color='lightblue', key=f'graph_{key}')],
             [sg.Button('Edit', key=f'btn_{key}_Edit'),
              sg.Button('Delete', key=f'btn_{key}_Delete'),
              sg.Checkbox('Enabled', default=enabled, key=f'chk_{key}_enabled', enable_events=True)]
@@ -219,15 +219,12 @@ while True:
         key = f'{rule["sensor_temp"]}_{rule["sensor_controls"][0]}'
         graph = window.find_element(f'graph_{key}')
         graph.erase()
-        size = 1
-        relative_size = (1 / 100) * max(points[-1])
 
-        # Draw axis
         canvas_size = graph.CanvasSize
         start_point = (points[0][0] - 5, points[0][1] - 5)
         end_point = (points[-1][0] + 5, points[-1][1] + 5)
-        #graph.DrawLine((-5, start_point[1] + 3), (canvas_size[0], start_point[1] + 3))
-        #graph.DrawLine((start_point[0] + 3, -5), (start_point[0] + 3, canvas_size[0]))
+        size = 3
+        relative_size = (size / 100) * (end_point[0] - start_point[0])
 
         for i, point in enumerate(points):
             graph.draw_point(point, color='red', size=relative_size)
@@ -247,8 +244,8 @@ while True:
             current_point_location = [start_point[0], speed]
         else:
             current_point_location = current_point
-        graph.draw_point(current_point_location, color='green', size=relative_size + 0.5)
-        current_point_text = [current_point_location[0] + 4, current_point_location[1] + 4]
+        graph.draw_point(current_point_location, color='green', size=relative_size * 1.5)
+        current_point_text = [current_point_location[0] + relative_size * 3.5, current_point_location[1] + relative_size * 3.5]
         graph.draw_text(current_point, current_point_text, color='green')
 
 config.terminate = True
