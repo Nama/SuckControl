@@ -1,7 +1,10 @@
+import copy
 import sys
 import logging
 import webbrowser
+from operator import itemgetter
 from time import sleep
+from pathlib import Path
 import PySimpleGUI as sg
 from psgtray import SystemTray
 from configcontrol import Config
@@ -27,6 +30,7 @@ config_moved = config.load()
 start_daemons(config)
 name = 'SuckControl'
 sg.theme('DarkGrey12')
+icon_path = Path.joinpath(config.root_path, 'icon.ico').absolute()
 sleep(7)  # Wait till all the hardware is loaded
 
 
@@ -47,6 +51,75 @@ def open_url(url):
     b.open(url)
 
 
+def check_point_position(point, x, y, locations=None):
+    ## Restrict going beyond 0 and 100
+    #if x < 0:
+    #    x = 0
+    #elif x > 100:
+    #    x = 100
+    #if y < 0:
+    #    y = 0
+    #elif y > 100:
+    #    y = 100
+    ## Make sure that the location is not lower or higher than other points
+    #point_locations = []
+    #for key, point_data in added_points.items():
+    #    point_locations.append(point_data['location'])
+    #    if point != key:
+    #        if x > point_data['location'][0] and y < point_data['location'][1]:
+    #            y = point_data['location'][1] + 1
+    #            break
+    #        elif x < point_data['location'][0] and y > point_data['location'][1]:
+    #            x = point_data['location'][0] + 1
+    #            break
+    if locations:
+        next_x = None
+        next_y = None
+        prev_x = None
+        prev_y = None
+        if locations[location_index] == locations[0]:
+            # First point
+            prev_x = 0
+            prev_y = 0
+        elif locations[location_index] == locations[-1]:
+            # Last point
+            next_x = 100
+            next_y = 100
+        if not next_x:
+            if len(locations) == 1:
+                next_x = locations[location_index][0]
+                next_y = locations[location_index][1]
+            else:
+                next_x = locations[location_index + 1][0]
+                next_y = locations[location_index + 1][1]
+        if not prev_x:
+            prev_x = locations[location_index - 1][0]
+            prev_y = locations[location_index - 1][1]
+
+        if x < prev_x:
+            x = prev_x
+        elif x > next_x:
+            x = next_x
+        if y < prev_y:
+            y = prev_y
+        elif y > next_y:
+            y = next_y
+    else:
+        if x < 0:
+            x = 0
+        elif x > 100:
+            x = 100
+        if y < 0:
+            y = 0
+        elif y > 100:
+            y = 100
+    graph_ar.relocate_figure(point, x, y)
+    graph_ar.delete_figure(added_points[point]['text'])
+    added_points[point]['text'] = graph_ar.draw_text(f'{x}°C, {y}%', (x + 10, y + 4))
+    return x, y
+
+
+# Prepare the rules from config for the main window
 devices = config.config['devices']
 rules = [[]]
 for rule in config.config['user']:
@@ -73,6 +146,7 @@ for rule in config.config['user']:
     if len(rules[-1]) == 5:
         rules.append([])
 
+# Prepare all sensors for the main window
 controls = get_active_controls()
 sensor_objects = {}
 sensor_controllers = [[]]
@@ -105,6 +179,15 @@ for ident, sensor in config.sensors_all.items():
             [sg.Frame(title, [[sensor_objects[ident]]])]
         )
 
+# Prepare sensors for add rule window
+ar_sensor_temps = []
+ar_sensor_controls = []
+for ident, temp in config.sensors_temp.items():
+    ar_sensor_temps.append([sg.Radio(temp.Name, 'sensors_temp', key=ident)])
+for ident, control in config.sensors_control.items():
+    ar_sensor_controls.append([sg.Checkbox(control.Name, key=ident)])
+
+# Prepare main window
 menu = [[name, ['GitHub::mn_github', '!Reload Hardware', 'Exit', ]],
         ['How to', [f'{name}::mn_ht_{name}', 'Airflow::mn_ht_airflow']], ]
 
@@ -114,13 +197,24 @@ layout = [[sg.Menu(menu), sg.Frame('Rules', rules)],
            sg.Column([[sg.Frame('Temperatures', sensor_temps)]])],
           [sg.Button('Add Rule', key='btn_AddRule')]]
 
-window = sg.Window(name, layout, finalize=True, alpha_channel=0, enable_close_attempted_event=True, icon='icon.ico',
+graph_ar = sg.Graph((300, 300), (-10, -10), (110, 110), background_color='lightblue',
+                    key='graph_add_rule', enable_events=True, drag_submits=True)
+layout_add_rule = [[sg.Column([[sg.Frame('Choose a temperature sensor:', ar_sensor_temps)]]),
+                    sg.Column([[sg.Frame('Choose the fans to control:', ar_sensor_controls)]]),
+                    sg.Column([[graph_ar]])]]
+
+add_rule_layout = layout_add_rule
+add_rule_window = sg.Window('Add new rule', add_rule_layout, finalize=True, enable_close_attempted_event=True)
+add_rule_window.hide()
+add_rule_active = False
+
+window = sg.Window(name, layout, finalize=True, alpha_channel=0, enable_close_attempted_event=True,
                    location=sg.user_settings_get_entry('-location-', (None, None)))
 window.hide()
 window_hidden = True
 
 tray_menu = ['', ['Open', 'Exit']]
-tray = SystemTray(tray_menu, single_click_events=True, window=window, tooltip=name, icon=r'icon.ico')
+tray = SystemTray(tray_menu, single_click_events=True, window=window, tooltip=name)
 while True:
     event, values = window.read(timeout=1500)
     if event == tray.key:
@@ -150,9 +244,76 @@ while True:
     event_data = event.split('::')[-1].split('_')
     # Check for button clicks
     if event_data[0] == 'btn':
-        if event_data[-1] == 'AddRule':
+        if event_data[-1] == 'AddRule' and not add_rule_active:
             # TODO: https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_Layout_Extend.py
-            pass
+            add_rule_active = True
+            add_rule_window.un_hide()
+            action = None
+            moving_point = None
+            added_points = {}
+            event_counter = 0
+            allow_area = None
+            current_location = []
+            while True:
+                event_ar, values_ar = add_rule_window.read()
+                if event_ar in (sg.WIN_CLOSE_ATTEMPTED_EVENT, 'Exit'):
+                    graph_ar.erase()
+                    add_rule_window.hide()
+                    add_rule_active = False
+                    break
+                elif event_ar.startswith('graph_add_rule'):
+                    graph_key = event_ar.split('+')[0]
+                    point = graph_ar.get_figures_at_location(values_ar[graph_key])
+                    if point:
+                        point = point[0]  # It's a tuple
+                    x = values_ar[graph_key][0]
+                    y = values_ar[graph_key][1]
+                    if event_ar.endswith('+UP'):
+                        # One single click are 3 events, so these checks are needed
+                        if action == 'moving':
+                            x, y = check_point_position(moving_point, x, y)
+                            added_points[moving_point]['location'] = (x, y)
+                            graph_ar.delete_figure(allow_area)
+                            allow_area = None
+                            moving_point = None
+                        action = None
+                    elif point and not moving_point or moving_point in added_points.keys() and action in (None, 'moving'):
+                        # User clicked on existing point
+                        if not moving_point:
+                            # To keep track, that the user is still dragging
+                            if point not in added_points.keys():
+                                # Incase user drags with clicking on empty space
+                                continue
+                            action = 'moving'
+                            moving_point = point
+                            current_location = added_points[moving_point]['location']
+                        locations = [location['location'] for location in added_points.values()]
+                        locations.sort(key=itemgetter(0))
+                        location_index = locations.index(current_location)
+                        if not allow_area:
+                            if locations[location_index] == locations[0]:
+                                # First point
+                                if len(locations) == 1:
+                                    next_location = (100, 100)
+                                else:
+                                    next_location = locations[location_index + 1]
+                                allow_area = graph_ar.draw_rectangle((0, 0), next_location, fill_color='green')
+                            elif locations[location_index] == locations[-1]:
+                                # Last point
+                                allow_area = graph_ar.draw_rectangle(locations[location_index - 1], (100, 100), fill_color='green')
+                            else:
+                                allow_area = graph_ar.draw_rectangle(locations[location_index-1], locations[location_index+1], fill_color='green')
+                            graph_ar.send_figure_to_back(allow_area)
+                        check_point_position(moving_point, x, y, locations)
+                    elif not action:
+                        # User clicked on a free space
+                        action = 'new'
+                        point = graph_ar.draw_point(values_ar[graph_key], color='red', size=5)
+                        added_points[point] = {}
+                        added_points[point]['location'] = (x, y)
+                        added_points[point]['text'] = graph_ar.draw_text(f'{x}°C, {y}%', (x+10, y+4))
+                        x, y = check_point_position(point, x, y)
+                        added_points[point]['location'] = (x, y)
         elif event_data[-1] == 'Delete':
             first_controller = event_data[2]
             for i, rule in enumerate(config.config['user']):
@@ -247,6 +408,7 @@ while True:
         graph.draw_point(current_point_location, color='green', size=relative_size * 1.5)
         current_point_text = [current_point_location[0] + relative_size * 3.5, current_point_location[1] + relative_size * 3.5]
         graph.draw_text(current_point, current_point_text, color='green')
+
 
 config.terminate = True
 config.stop()
