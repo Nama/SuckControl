@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, redirect, url_for
 try:
     loglevel = sys.argv[1]
 except IndexError:
-    loglevel = 'INFO'
+    loglevel = 'ERROR'
 numeric_level = getattr(logging, loglevel.upper(), None)
 if not isinstance(numeric_level, int):
     raise ValueError('Invalid log level: %s' % loglevel)
