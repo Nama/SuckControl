@@ -1,10 +1,12 @@
 # SuckControl
+**Unfinished branch**  
 ![Icon](suckcontrol/html/favicon.ico)
 ## Description
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
 Built on [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Check it to see what is possible with your hardware.
 
-![Gui of SuckControl](images/gui.jpg)
+![Add rule window](images/Animation2.gif)
+![Gui of SuckControl](images/psg.png)
 
 ## Features
 * Define rules (curves) for every single fan with any temperature sensor
