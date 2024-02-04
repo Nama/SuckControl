@@ -1,4 +1,6 @@
 # SuckControl
+I moved to linux and won't update this project anymore. Using [CoolerControl](https://gitlab.com/coolercontrol/coolercontrol) now.  
+The branch `PySimpleGUI` has my latest development code with a new unfinished GUI.  
 ![Icon](suckcontrol/html/favicon.ico)
 ## Description
 Automatic control of any fan (*which is supported by your motherboard or graphics card*) depending on any temperature sensor.  
